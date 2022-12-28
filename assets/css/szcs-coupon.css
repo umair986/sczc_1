@@ -1,0 +1,60 @@
+/* .szcs_coupon_add_voucher {
+  box-shadow: 0 0 3px rgb(0 0 0 / 50%);
+  padding: 1rem;
+}
+
+.szcs_coupon_title {
+  text-transform: uppercase;
+  color: rgb(233, 87, 87);
+  font-size: 1.5em;
+} */
+.szcs_coupon {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.szcs_coupon_icon svg {
+  height: 30px;
+  width: 30px;
+}
+
+.szcs_coupon_points {
+  display: flex;
+  flex-direction: column;
+  /* line-height: 1rem; */
+}
+
+
+.szcs_transactions {
+  margin: 50px 0;
+}
+
+/* .szcs_clean_page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#szcs_coupon_login_form {
+  width: 100%;
+  max-width: 500px;
+}
+
+#szcs_coupon_login_form input[type="text"],
+#szcs_coupon_login_form input[type="password"] {
+  height: 42px;
+}
+
+#szcs_coupon_login_form .row_submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#szcs_coupon_login_form .links {
+  display: flex;
+  flex-direction: column;
+} */

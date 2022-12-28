@@ -1,0 +1,90 @@
+.szcs_coupon_options_panel {
+  color: #555;
+}
+
+.szcs_coupon_options_panel .form-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.szcs_coupon_options_panel .form-field label {
+  width: 150px;
+}
+
+/*
+
+.szcs_coupon_options_panel .form-field input {
+  width: 100px;
+}
+
+.szcs_coupon_options_panel .form-field.szcs_expiry_date_field input {
+  max-width: 150px;
+  flex: 1;
+} */
+
+.szcs_coupon_options_panel .form-field input {
+  flex: 1;
+  min-width: 150px;
+  max-width: 100%;
+}
+
+.szcs_coupon input[type=date],
+.szcs_coupon input[type=datetime-local],
+.szcs_coupon input[type=datetime],
+.szcs_coupon input[type=email],
+.szcs_coupon input[type=month],
+.szcs_coupon input[type=number],
+.szcs_coupon input[type=password],
+.szcs_coupon input[type=search],
+.szcs_coupon input[type=tel],
+.szcs_coupon input[type=text],
+.szcs_coupon input[type=time],
+.szcs_coupon input[type=url],
+.szcs_coupon input[type=week] {
+  padding-right: 0;
+  position: relative;
+}
+
+.szcs_coupon input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+}
+
+.szcs_coupon_add_voucher {
+  box-shadow: 0 0 3px rgb(0 0 0 / 50%);
+
+}
+
+/* coupon-generator */
+
+
+#szcs_coupon_login_screen {
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+#szcs_coupon_login_screen:before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -10px 0 0 -10px;
+  background: url(../../../../../../wp-includes/images/spinner.gif) no-repeat center;
+  background-size: 20px 20px;
+  transform: translateZ(0);
+}
