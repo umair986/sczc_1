@@ -89,6 +89,8 @@ class SzCsCouponForms
         wp_set_password($pass, $id);
         wc_add_notice(__('Password reset successfully.', 'szcs-coupon'), 'success');
         $_GET['type'] = 'login';
+      } else {
+        wc_add_notice(__('Confirm password does not match.', 'szcs-coupon'), 'error');
       }
     }
   }
