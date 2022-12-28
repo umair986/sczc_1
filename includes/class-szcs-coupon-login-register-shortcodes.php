@@ -78,7 +78,7 @@ class SzCsCouponForms
       $pass = $_REQUEST['password'];
       $cpass = $_REQUEST['cpassword'];
 
-      if ($pass == $cpass) {
+      if (!empty($pass) && $pass == $cpass) {
         $key = $_REQUEST['key'];
         $id = $_REQUEST['id'];
         $user = $this->check_password_reset_key($key, $id);
