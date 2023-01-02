@@ -46,6 +46,19 @@ class SzCsCouponOption
     $options = get_option('szcs-coupon_options');
 
     if (isset($options['szcs-coupon-member-only']) && $options['szcs-coupon-member-only'] == 1) {
+      if (!is_user_logged_in() && !isset($_GET['login']) || (isset($_GET['login']) && $_GET['login'] != 'true')) {
+        // redirect to same url with login=true
+        wp_redirect(home_url(add_query_arg(array('login' => 'true'), $_SERVER['REQUEST_URI'])));
+        exit;
+      }
+    }
+    if (is_user_logged_in() && isset($_GET['login'])) {
+      // redirect to same url without login=true
+      wp_redirect(home_url(remove_query_arg('login', $_SERVER['REQUEST_URI'])));
+      exit;
+    }
+    /*
+    if (isset($options['szcs-coupon-member-only']) && $options['szcs-coupon-member-only'] == 1) {
       // Check to see if user in not logged in and not on the login page
       if (
 
@@ -76,7 +89,7 @@ class SzCsCouponOption
         wp_redirect(home_url(add_query_arg($query_args, 'auth')));
         exit;
       }
-    }
+    } */
   }
 }
 

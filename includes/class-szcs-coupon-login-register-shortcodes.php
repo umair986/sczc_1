@@ -44,8 +44,64 @@ class SzCsCouponForms
     add_action('init', array($this, 'validate_pass_key'));
     add_action('init', array($this, 'post_reset'));
     add_shortcode('szcs_coupon_login_form', array($this, 'login_shortcode'));
+    add_action('digits_custom_validate', array($this, 'digits_custom_validate'));
+    add_filter('digits_registration_errors', array($this, 'digits_registration_errors'));
+    add_action('woocommerce_created_customer', array($this, 'redeem_voucher'), 10, 2);
+
     //add_action('login_form_rp', array($this, 'redirect_to_custom_lostpassword'));
     //add_action('wp', array($this, 'members_only'));
+  }
+
+  public function digits_registration_errors($validation_error)
+  {
+    global $wpdb, $szcs_coupon_voucher;
+    if (isset($_REQUEST['digits_reg_szcsvoucher']) && empty($_REQUEST['digits_reg_szcsvoucher'])) {
+      $validation_error->add('szcsvoucher', __('Please enter voucher code.', 'szcs-coupon'));
+    }
+
+    $voucher_no = $wpdb->escape($_REQUEST['digits_reg_szcsvoucher']);
+    $voucher = $szcs_coupon_voucher->validate_voucher($voucher_no, '', true);
+    if ($voucher[0] !== 'valid') {
+      $validation_error->add('szcsvoucher', __($voucher[2], 'szcs-coupon'));
+    }
+
+    return $validation_error;
+  }
+
+  public function digits_custom_validate()
+  {
+    global $wpdb, $szcs_coupon_voucher;
+    if (isset($_REQUEST['digits_reg_szcsvoucher']) && empty($_REQUEST['digits_reg_szcsvoucher'])) {
+      wp_send_json_error(array('message' => __('Please enter voucher code.', 'szcs-coupon')));
+      die();
+    }
+    $voucher_no = $wpdb->escape($_REQUEST['digits_reg_szcsvoucher']);
+    $voucher = $szcs_coupon_voucher->validate_voucher($voucher_no, '', true);
+    if ($voucher[0] !== 'valid') {
+      wp_send_json_error(array('message' => __($voucher[2], 'szcs-coupon')));
+      die();
+    }
+  }
+
+  public function redeem_voucher($user_id)
+  {
+    global $wpdb, $szcs_coupon_voucher;
+    if (isset($_REQUEST['digits_reg_szcsvoucher']) && !empty($_REQUEST['digits_reg_szcsvoucher'])) {
+      $voucher_no = $wpdb->escape($_REQUEST['digits_reg_szcsvoucher']);
+      $voucher_info = $szcs_coupon_voucher->validate_voucher($voucher_no, '', true);
+      if ($voucher_info[0] === 'valid') {
+        $voucher = $voucher_info[1];
+        do_action('szcs_coupon_add_transaction', array(
+          'user_id' => $user_id,
+          'description' => "Voucher $voucher->voucher_id claimed by user $user_id ",
+          'debit_points' => 0,
+          'credit_points' => $voucher->voucher_amount,
+          'voucher_id' => $voucher->voucher_id,
+          'voucher_no' => $voucher->voucher_no,
+          'status' => null,
+        ));
+      }
+    }
   }
 
   public function validate_pass_key()
@@ -97,6 +153,7 @@ class SzCsCouponForms
 
   public function post_login()
   {
+
     if ($_POST && isset($_REQUEST['action']) && $_REQUEST['action'] == 'user_login' && wp_verify_nonce($_REQUEST['szcs-coupon_wpnonce'], 'szcs-coupon-login')) {
 
       global $wpdb;
@@ -115,7 +172,12 @@ class SzCsCouponForms
       $login_data['user_password'] = $password;
       $login_data['remember'] = $remember;
 
-      $user_verify = wp_signon($login_data, true);
+      if (empty($username) || empty($password)) {
+        wc_add_notice(__('Username or password is empty.', 'szcs-coupon'), 'error');
+        return;
+      }
+
+      $user_verify = wp_signon($login_data, is_ssl());
 
       if (is_wp_error($user_verify)) {
         foreach ($user_verify->get_error_messages() as $err) {
@@ -134,7 +196,7 @@ class SzCsCouponForms
       }
     }
   }
-
+  //[szcs_coupon_login_form logo_url="http://mfb2.test/wp-content/uploads/2022/04/Freebucks-Final-2048x834-1-1024x417Organge-Blue.png"]
   public function post_register()
   {
 
@@ -281,6 +343,7 @@ class SzCsCouponForms
   // Redirect users who arent logged in...
   public function login_shortcode($args)
   {
+    //do_action('mo_generate_otp', null, NULL, NULL, "+917786031707", "phone", null, null, null);
 
     if (is_user_logged_in()) {
       // on success if redirect url set
@@ -425,7 +488,7 @@ class SzCsCouponForms
     $output .=  '<input type="hidden" name="action" value="user_login">';
 
     // Submit button
-    $output .= '<button type="submit">Login</button>';
+    $output .= '<button type="submit" id="szcs-login">Login</button>';
 
     $output .=  '</form>';
     $query_args['type'] = 'register';
