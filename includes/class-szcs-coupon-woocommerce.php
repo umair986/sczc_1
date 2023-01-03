@@ -168,12 +168,11 @@ class SzCsCouponWC
   {
     $points = 0;
 
-    global $szcs_coupon_wc;
     foreach ($cart_object->get_cart() as $hash => $value) {
 
-      $points_amount = $szcs_coupon_wc->wc_product_get_points_amount($value['product_id']);
+      $points_amount = $this->wc_product_get_points_amount($value['product_id']);
       $points += $points_amount * $value['quantity'];
-      $value['data']->set_price($szcs_coupon_wc->wc_product_get_amount_payable($value['product_id']));
+      $value['data']->set_price($this->wc_product_get_amount_payable($value['product_id']));
     }
   }
 
@@ -335,12 +334,10 @@ class SzCsCouponWC
 
   public function wc_product_loop_display_redeemable_points()
   {
-    // get points of the product
-    global $szcs_coupon_wc;
-    $points = $szcs_coupon_wc->wc_product_get_points_amount();
+    $points = $this->wc_product_get_points_amount();
 
     // get points of the product
-    $payable = $szcs_coupon_wc->wc_product_get_amount_payable();
+    $payable = $this->wc_product_get_amount_payable();
 
     if ($points) {
       printf(
@@ -452,8 +449,7 @@ class SzCsCouponWC
 
     // get points needed for order
     foreach ($order->get_items() as $hash => $value) {
-      global $szcs_coupon_wc;
-      $points +=  $szcs_coupon_wc->wc_product_get_points_amount($value['product_id']) * $value['quantity'];
+      $points +=  $this->wc_product_get_points_amount($value['product_id']) * $value['quantity'];
     }
 
     global $szcs_coupon_wallet;
@@ -496,8 +492,7 @@ class SzCsCouponWC
 
     // get points needed for order
     foreach ($order->get_items() as $hash => $value) {
-      global $szcs_coupon_wc;
-      $points +=  $szcs_coupon_wc->wc_product_get_points_amount($value['product_id']) * $value['quantity'];
+      $points +=  $this->wc_product_get_points_amount($value['product_id']) * $value['quantity'];
     }
 
     global $szcs_coupon_wallet;
