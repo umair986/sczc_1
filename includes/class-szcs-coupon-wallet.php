@@ -129,31 +129,22 @@ class SzCsCouponWallet
 	function claim_voucher($voucher, $id = '')
 	{
 		if (is_user_logged_in()) {
-			if (!$id || !is_admin()) {
-				$id = get_current_user_id();
-			}
-			global $wpdb;
-			global $szcs_coupon_transaction;
-			$claims_count = count($szcs_coupon_transaction->get_transactions_by_voucher_id($voucher->voucher_id));
-			if ($claims_count < $voucher->usage_limit_per_voucher) {
-				$claim_by_user_count = count($szcs_coupon_transaction->get_number_of_claims_by_user($voucher->voucher_id, $id));
-				if ($claim_by_user_count < $voucher->usage_limit_per_user) {
-					do_action('szcs_coupon_add_transaction', array(
-						'user_id' => $id,
-						'description' => "Voucher $voucher->voucher_id claimed by user $id",
-						'debit_points' => 0,
-						'credit_points' => $voucher->voucher_amount,
-						'voucher_id' => $voucher->voucher_id,
-						'voucher_no' => $voucher->voucher_no,
-						'status' => null,
-					));
-					do_action('szcs_coupon_balance_added', $this->get_data($id));
-					wc_add_notice('Voucher claimed successfully', 'success');
-				} else {
-					wc_add_notice(__('You have already claimed this voucher, please try another', 'szcs-coupon'), 'error');
-				}
+			//? Checks if the voucher can be claimed;
+			$claim_validation = szcs_coupon_can_redeem($voucher);
+
+			//? If the voucher can be claimed, then add the transaction;
+			if ($claim_validation[0] === 'success') {
+				do_action('szcs_coupon_add_transaction', array(
+					'user_id' => $id,
+					'description' => "Voucher $voucher->voucher_id claimed by user $id",
+					'debit_points' => 0,
+					'credit_points' => $voucher->voucher_amount,
+					'voucher_id' => $voucher->voucher_id,
+					'voucher_no' => $voucher->voucher_no,
+					'status' => null,
+				));
 			} else {
-				wc_add_notice(__('This voucher is already claimed, please try another', 'szcs-coupon'), 'error');
+				wc_add_notice(__($claim_validation[2], 'szcs-coupon'), 'error');
 			}
 		} else {
 			wc_add_notice(__('You need to logged in to claim voucher', 'szcs-coupon'), 'error');

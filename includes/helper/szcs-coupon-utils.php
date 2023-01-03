@@ -51,3 +51,33 @@ if (!function_exists('szcs_coupon_create_field')) {
     return $output;
   }
 }
+
+if (!function_exists('szcs_coupon_can_redeem')) {
+  function szcs_coupon_can_redeem($voucher, $user_id = '')
+  {
+    if (!$user_id && !is_admin() && is_user_logged_in()) {
+      $user_id = get_current_user_id();
+    }
+
+    // get szcs_coupon_transaction class instance
+    global $szcs_coupon_transaction;
+
+    // get number of claims
+    $claims_count = count($szcs_coupon_transaction->get_transactions_by_voucher_id($voucher->voucher_id));
+
+    // check if voucher is already claimed
+    if ($claims_count >= $voucher->usage_limit_per_voucher) {
+      return array('error', 'Error', 'This voucher is already claimed, please try another');
+    }
+
+    if ($user_id) {
+      // check if user has already claimed this voucher
+      $claim_by_user_count = count($szcs_coupon_transaction->get_number_of_claims_by_user($voucher->voucher_id, $user_id));
+      if ($claim_by_user_count >= $voucher->usage_limit_per_user) {
+        return array('error', 'Error', 'You have already claimed this voucher, please try another');
+      }
+    }
+
+    return array('success', 'Success', 'Voucher can be claimed');
+  }
+}

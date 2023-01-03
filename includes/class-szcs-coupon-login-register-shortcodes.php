@@ -44,6 +44,8 @@ class SzCsCouponForms
     add_action('init', array($this, 'validate_pass_key'));
     add_action('init', array($this, 'post_reset'));
     add_shortcode('szcs_coupon_login_form', array($this, 'login_shortcode'));
+
+    //! need to check if digits is active
     add_action('digits_custom_validate', array($this, 'digits_custom_validate'));
     add_filter('digits_registration_errors', array($this, 'digits_registration_errors'));
     add_action('woocommerce_created_customer', array($this, 'redeem_voucher'), 10, 2);
@@ -64,6 +66,10 @@ class SzCsCouponForms
     if ($voucher[0] !== 'valid') {
       $validation_error->add('szcsvoucher', __($voucher[2], 'szcs-coupon'));
     }
+    $claim_validation = szcs_coupon_can_redeem($voucher[1]);
+    if ($claim_validation[0] !== 'success') {
+      $validation_error->add('szcsvoucher', __($claim_validation[2], 'szcs-coupon'));
+    }
 
     return $validation_error;
   }
@@ -81,6 +87,11 @@ class SzCsCouponForms
       wp_send_json_error(array('message' => __($voucher[2], 'szcs-coupon')));
       die();
     }
+    $claim_validation = szcs_coupon_can_redeem($voucher[1]);
+    if ($claim_validation[0] !== 'success') {
+      wp_send_json_error(array('message' => __($claim_validation[2], 'szcs-coupon')));
+      die();
+    }
   }
 
   public function redeem_voucher($user_id)
@@ -91,18 +102,28 @@ class SzCsCouponForms
       $voucher_info = $szcs_coupon_voucher->validate_voucher($voucher_no, '', true);
       if ($voucher_info[0] === 'valid') {
         $voucher = $voucher_info[1];
-        do_action('szcs_coupon_add_transaction', array(
-          'user_id' => $user_id,
-          'description' => "Voucher $voucher->voucher_id claimed by user $user_id ",
-          'debit_points' => 0,
-          'credit_points' => $voucher->voucher_amount,
-          'voucher_id' => $voucher->voucher_id,
-          'voucher_no' => $voucher->voucher_no,
-          'status' => null,
-        ));
+
+        //? Checks if the voucher can be claimed;
+        $claim_validation = szcs_coupon_can_redeem($voucher);
+
+        //? If the voucher can be claimed, then add the transaction;
+        if ($claim_validation[0] === 'success') {
+          do_action('szcs_coupon_add_transaction', array(
+            'user_id' => $user_id,
+            'description' => "Voucher $voucher->voucher_id claimed by user $user_id ",
+            'debit_points' => 0,
+            'credit_points' => $voucher->voucher_amount,
+            'voucher_id' => $voucher->voucher_id,
+            'voucher_no' => $voucher->voucher_no,
+            'status' => null,
+          ));
+        }
       }
     }
   }
+
+
+  // ! None of the below functions are used in the plugin, but are kept for future use;
 
   public function validate_pass_key()
   {
