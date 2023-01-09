@@ -99,12 +99,24 @@ class SzCsCouponWallet
 		return $balance;
 	}
 
-	function get_balance_html()
+	function get_balance_html($args)
 	{
+
+		$args = wp_parse_args(
+			$args,
+			array(
+				'href' => home_url('/voucher/'),
+				'title' => 'Points'
+			)
+		);
 
 		if (get_current_user_id()) {
 			wp_enqueue_style('szcs_coupons');
-			$output = '<div class="szcs_coupon">';
+			if ($args['href']) {
+				$output = '<a class="szcs_coupon" href="' . $args['href'] . '" title="' . $args['title'] . '">';
+			} else {
+				$output = '<div class="szcs_coupon">';
+			}
 			$output .= '<span class="szcs_coupon_icon">';
 			$output .= '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-wallet2" viewBox="0 0 16 16"><path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499L12.136.326zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484L5.562 3zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/></svg>';
 			$output .= '</span>';
@@ -113,10 +125,14 @@ class SzCsCouponWallet
 			$output .= number_format($this->get_balance(), 2);
 			$output .= '</span>';
 			$output .= '<span class="szcs_coupon_text">';
-			$output .= 'Points Redemption';
+			$output .= $args['title'];
 			$output .= '</span>';
 			$output .= '</span>';
-			$output .= '</div>';
+			if ($args['href']) {
+				$output .= '</a>';
+			} else {
+				$output .= '</div>';
+			}
 			return $output;
 		}
 		return '';
@@ -131,6 +147,9 @@ class SzCsCouponWallet
 		if (is_user_logged_in()) {
 			//? Checks if the voucher can be claimed;
 			$claim_validation = szcs_coupon_can_redeem($voucher);
+			if (!$id) {
+				$id = get_current_user_id();
+			}
 
 			//? If the voucher can be claimed, then add the transaction;
 			if ($claim_validation[0] === 'success') {
@@ -160,7 +179,7 @@ class SzCsCouponWallet
 				if ($voucher[0] === 'valid') {
 					do_action('szcs_claim_voucher', $voucher[1]);
 				} else {
-					self::$_message = $voucher;
+					//self::$_message = $voucher;
 					wc_add_notice(__($voucher[2], 'szcs-coupon'), $voucher[0]);
 				}
 			} else {

@@ -269,7 +269,8 @@ class SzCsCouponCodePostType
 
   public function extra_tablenavExport($which)
   {
-    if ('top' === $which) {
+    global $post;
+    if ($post->post_type == 'szcs_coupons_code' && 'top' === $which) {
       /* translators: SzCsCommerce currency */
       echo '<div class="alignleft actions"><input type="submit" name="szcs_export_coupons" id="szcs-export-submit" class="button" value="' . __('Export', 'szcs-coupon') . '"></div>';
     }

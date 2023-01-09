@@ -123,7 +123,9 @@ if (!class_exists('SzCsCouponTransactoin')) {
         }
 
         // update user table
-        $wpdb->update("{$wpdb->prefix}szcs_user_points", $user_args, array('user_id' => $args['user_id']));
+        if ($args['debit_points'] > 0 || $args['credit_points'] > 0) {
+          $wpdb->update("{$wpdb->prefix}szcs_user_points", $user_args, array('user_id' => $args['user_id']));
+        }
       } else { //#2 new user
         if (isset($args['closing_balance'])) { // directly want to set closing balance
 
