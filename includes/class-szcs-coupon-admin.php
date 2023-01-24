@@ -34,12 +34,19 @@ class SzCsCouponAdmin
    */
   public function __construct()
   {
+    /*
+    add action to Initialize main admin menu in the dashboard
+    */
     add_action('admin_menu', array($this, 'admin_menu'), 50);
+
+    /*
+    add action to enqueue admin styles and scripts
+    */
     add_action('admin_enqueue_scripts', array($this, 'admin_scripts'), 10);
   }
 
   /**
-   * Init admin menu
+   * Initialize main admin menu in the dashboard
    */
   public function admin_menu()
   {
@@ -53,6 +60,10 @@ class SzCsCouponAdmin
       'dashicons-tickets-alt',
       25
     );
+
+    /*
+    do action after main admin menu in the dashboard initialized
+    */
     do_action('szcs_admin_menu', $slug);
   }
 
@@ -61,15 +72,24 @@ class SzCsCouponAdmin
   /**
    * Register and enqueue admin styles and scripts
    *
-   * @global type $post
    */
   public function admin_scripts()
   {
+
     $screen = get_current_screen();
+    $screen_id = $screen ? $screen->id : '';
+
+    $customVar = array(
+      'siteurl' => get_option('siteurl'),
+      'couponGeneratorUrl' => admin_url('admin.php?page=szcs-coupon-generator'),
+      'screenId' => $screen_id,
+      'ajaxUrl' => admin_url('admin-ajax.php'),
+      'nonce' => wp_create_nonce('szcs-coupon-nonce'),
+    );
+
     wp_register_style('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/css/admin/szcs-coupon.css', array(), SZCS_COUPON_PLUGIN_VERSION, 'all');
     wp_register_script('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/admin/szcs-coupon.js', array('jquery'), SZCS_COUPON_PLUGIN_VERSION, false);
-    wp_localize_script('szcs_coupons_admin', 'SZCS_VARS', array('siteurl' => get_option('siteurl'), 'couponGeneratorUrl' => admin_url('admin.php?page=szcs-coupon-generator')));
-    $screen_id = $screen ? $screen->id : '';
+    wp_localize_script('szcs_coupons_admin', 'SZCS_VARS', $customVar);
     if (in_array($screen_id, array('szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator', 'edit-product_cat', 'edit-product_brand'), true)) {
       wp_enqueue_script('szcs_coupons_admin');
       wp_enqueue_style('szcs_coupons_admin');

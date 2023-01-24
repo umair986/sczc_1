@@ -40,7 +40,7 @@ jQuery(document).ready(function ($) {
       formData.append('action', 'szcs-coupon-export');
 
       // make a fetch request
-      fetch(`${SZCS_VARS.siteurl}${ajaxurl}`, {
+      fetch(`${SZCS_VARS.ajaxUrl}`, {
         method: 'post',
         body: formData,
       })
@@ -50,25 +50,20 @@ jQuery(document).ready(function ($) {
       .then(data => {
         if(typeof data === 'object'){
           var url = download(csvmaker(data), false);
-          $('<div />').attr({
-            id: 'message',
-            class: 'updated szcs-coupon-notice',
-          }).append($('<p />').html(`Your export is ready <a href="${url}" download="vouchers.csv">Click Here</a> to download.`)).insertAfter('.wp-header-end');
+          showNotification($, `Your export is ready <a href="${url}" download="vouchers.csv">Click Here</a> to download.`, 'updated');
         }else if(typeof data === 'string'){
-          $('<div />').attr({
-            id: 'message',
-            class: 'error szcs-coupon-notice',
-          }).append($('<p />').text(data)).insertAfter('.wp-header-end');
+          showNotification($, data, 'error');
         }
-        $('#szcs_coupon_login_screen').remove();
       })
       .catch(e => {
         $('<div />').attr({
           id: 'error',
           class: 'error szcs-coupon-notice',
         }).append($('<p />').html(`Something went wrong.`)).insertAfter('.wp-header-end');
+        
+      }).finally(() => {
         $('#szcs_coupon_login_screen').remove();
-      })
+      });
     });
   }
   //;
@@ -162,3 +157,168 @@ jQuery(function($) {
   }
 });
 });
+
+
+jQuery(function($) {
+  var taxonomy = $('input[name="taxonomy"]');
+  if(taxonomy.length){
+  $('#posts-filter').submit(function(e){
+    
+    var form = $(this);
+    var formData = new FormData(form[0]);
+    
+    if(formData.get('action') === 'edit_points'){
+      e.preventDefault();
+      hideNotification($);
+
+
+      // remove any previous screens
+      $('#szcs_change_points_screen').remove();
+
+      var wrapper = $('<div />').attr('id', 'szcs_change_points_screen').css('display', 'none');
+
+      var innerWrapper = $('<div />').addClass('szcs_change_points_content');
+
+      var newForm = $('<form />').attr({
+        id: 'szcs_change_points_form',
+        method: 'post',
+      });
+
+      var title = $('<h2 />').text('Change Points');
+
+      var inputWrapper = $('<div />').addClass('form-field form-required term-name-wrap');
+
+      var labelText = 'Points';
+      if(taxonomy.val() === 'product_cat')
+        labelText = 'Categories Points';
+      else if(taxonomy.val() === 'product_brand')
+        labelText = 'Brands Points';
+
+      var label = $('<label />').attr('for', 'szcs_points_field').text(labelText);
+      var input = $('<input />').attr({
+        type: 'number',
+        name: 'szcs_points_field',
+        id: 'szcs_points_field',
+        step: '0.01',
+        min: '0',
+      });
+
+      var button = $('<button />').attr({
+        type: 'submit',
+        id: 'szcs_change_points_submit',
+        class: 'button button-primary',
+      }).text('Change Points');
+
+      var buttonWrapper = $('<p />');
+
+      var close = $('<button />').attr({
+        type: 'button',
+        class: 'dashicons dashicons-no-alt',
+      }).click(function(){
+        wrapper.fadeOut(300, function(){
+          wrapper.remove();
+        });
+      });
+
+      var loading = $('<div />').attr({id: 'szcs_coupon_loading'}).css('display', 'none');
+
+      inputWrapper.append(close, label, input);
+
+      buttonWrapper.append(button, loading);
+      newForm.append(title, inputWrapper, buttonWrapper);
+      innerWrapper.append(newForm);
+      wrapper.append(innerWrapper);
+      $('body').append(wrapper);
+
+      wrapper.fadeIn(300);
+
+      // add event listener to the form
+      newForm.submit(function(e){
+        e.preventDefault();
+
+        var pointsValue = input.val();
+
+        // exit if the points value is empty or the tags are not selected
+        if(!formData.get('delete_tags[]')){
+          showNotification($, 'Please select at least one tag', 'error');
+          wrapper.fadeOut(300, function(){
+            wrapper.remove();
+          });
+          return;
+        }
+
+        // get the points value
+        var points = parseFloat(pointsValue);
+
+        if(points < 0 || points > 100 || isNaN(points)){
+          showNotification($, 'Points must be between 0 and 100', 'error');
+          wrapper.fadeOut(300, function(){
+            wrapper.remove();
+          });
+          return;
+        }
+
+        // add the points value to the form data
+        formData.set('points', points);
+
+        // add the action to the form data
+        formData.append('action', 'szcs_change_taxonomy_points');
+
+        // add the nonce to the form data
+        formData.append('nonce', SZCS_VARS.nonce);
+
+        // show the loading
+        loading.fadeIn(300);
+
+        // make a fetch request
+        fetch(`${SZCS_VARS.ajaxUrl}`, {
+          method: 'post',
+          body: formData,
+        })
+        .then(res => {
+          return res.json();
+        })
+        .then(data => {
+          if(data.success){
+            showNotification($, data.message, 'updated');
+            // reload the page
+            if(data.term_ids.length){
+              data.term_ids.forEach((termId) => {
+                var term = $(`#tag-${termId}`);
+                if(term.length){
+                  var pointsField = term.find('td[data-colname="Points"]');
+                  if(pointsField.length){
+                    pointsField.text(points+'%');
+                  }
+                }
+              });
+            }
+          }else{
+            showNotification($, data.message, 'error');
+          }
+        }).finally(() => {
+          wrapper.fadeOut(300, function(){
+            wrapper.remove();
+          });
+        })
+
+      });
+    }
+  });
+}
+});
+
+
+
+function showNotification($, message, type = 'error'){
+  hideNotification($);
+  var notice = $('<div />').attr({
+    id: 'message',
+    class: type +' szcs-coupon-notice',
+  }).append($('<p />').html(message)).insertAfter('.wp-header-end');
+
+}
+
+function hideNotification($){
+  $('.szcs-coupon-notice').remove();
+}

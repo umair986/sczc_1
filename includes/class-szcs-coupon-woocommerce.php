@@ -78,6 +78,12 @@ class SzCsCouponWC
 
     add_action('edited_edition', array($this, 'quick_edit_save_category_field'));
     add_action('edited_edition', array($this, 'quick_edit_save_brand_field'));
+
+    // add filter for bulk edit points in category
+    add_filter('bulk_actions-edit-product_cat', array($this, 'register_edit_bulk_action'));
+
+    // add filter for bulk edit points in brand
+    add_filter('bulk_actions-edit-product_brand', array($this, 'register_edit_bulk_action'));
   }
 
 
@@ -472,7 +478,7 @@ class SzCsCouponWC
   {
     if ($column_name == 'szcs_brand_points_field' || $column_name == 'szcs_cat_points_field') {
       $points = get_term_meta($term_id, $column_name, true);
-      if ($points >= 0 && $points <= 100) {
+      if ($points >= 0 && $points <= 100 && $points != '') {
         $string = $points . '%';
       } else {
         $string = '—';
@@ -490,7 +496,7 @@ class SzCsCouponWC
       <fieldset>
         <div id="<?php echo esc_attr($column_name); ?>" class="inline-edit-col">
           <label>
-            <span class="title"><?php _e('Points', 'szcs-coupon'); ?></span>
+            <span class="title"><?php _e('Points(%)', 'szcs-coupon'); ?></span>
             <span class="input-text-wrap"><input type="number" name="<?php echo esc_attr($column_name); ?>" class="ptitle" value=""></span>
           </label>
         </div>
@@ -620,6 +626,16 @@ class SzCsCouponWC
       ));
       $order->save();
     }
+  }
+
+  // add Edit Points option to bulk actions
+  public function register_edit_bulk_action($bulk_actions)
+  {
+
+    $bulk_actions['edit_points'] = __('Edit Points', 'szcs-coupon');
+    unset($bulk_actions['delete']); // Remove "Delete" bulk action
+    $bulk_actions['delete'] = __('Delete', 'szcs-coupon'); // Add "Delete" bulk action back to the end of the list
+    return $bulk_actions;
   }
 }
 
