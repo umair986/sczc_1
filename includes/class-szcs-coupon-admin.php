@@ -70,7 +70,7 @@ class SzCsCouponAdmin
     wp_register_script('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/admin/szcs-coupon.js', array('jquery'), SZCS_COUPON_PLUGIN_VERSION, false);
     wp_localize_script('szcs_coupons_admin', 'SZCS_VARS', array('siteurl' => get_option('siteurl'), 'couponGeneratorUrl' => admin_url('admin.php?page=szcs-coupon-generator')));
     $screen_id = $screen ? $screen->id : '';
-    if (in_array($screen_id, array('szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator'), true)) {
+    if (in_array($screen_id, array('szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator', 'edit-product_cat', 'edit-product_brand'), true)) {
       wp_enqueue_script('szcs_coupons_admin');
       wp_enqueue_style('szcs_coupons_admin');
     }

@@ -144,3 +144,21 @@ const csvmaker = function (data) {
 }
 
 
+
+jQuery(function($) {
+    $('#the-list button.editinline').click(function( e ) {
+  e.preventDefault();
+  var $tr = $(this).closest('tr');
+  var catField = $tr.find('td.szcs_cat_points_field');
+  var brandField = $tr.find('td.szcs_brand_points_field');
+  // Update field
+  if(catField.length){
+    cat = parseFloat(catField.text()) || '';
+    $('tr.inline-edit-row :input[name="szcs_cat_points_field"]').val(cat);
+  }
+  if(brandField.length){
+    brand = parseFloat(brandField.text()) || '';
+    $('tr.inline-edit-row :input[name="szcs_brand_points_field"]').val(brand);
+  }
+});
+});

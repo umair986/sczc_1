@@ -41,7 +41,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
       array(
         'cb'       => __('cb', 'szcs-coupon'),
         'ID'       => __('ID', 'szcs-coupon'),
-        'user_login' => __('Username', 'szcs-coupon'),
+        'username' => __('Username', 'szcs-coupon'),
         'display_name' => __('Name', 'szcs-coupon'),
         'user_email' => __('Email', 'szcs-coupon'),
         'wallet_points' => __('Remaining balance', 'szcs-coupon'),
@@ -217,7 +217,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
   public function get_sortable_columns()
   {
     $sortable_columns = array(
-      'user_login' => array('user_login', false),
+      'username' => array('user_login', false),
       'display_name' => array('display_name', false),
       'user_email' => array('user_email', false),
       'wallet_points' => array('wallet_points', false),
@@ -237,10 +237,11 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
   {
     switch ($column_name) {
       case 'ID':
-      case 'user_login':
       case 'display_name':
       case 'user_email':
         return $item[$column_name] ? $item[$column_name] : '';
+      case 'username':
+        return $item['user_login'];
       case 'wallet_points':
         return number_format($item[$column_name] ? $item[$column_name] : 0, 2);
       case 'actions':

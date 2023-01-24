@@ -15,6 +15,8 @@ class SzCsCouponUsers
    */
   protected static $_instance = null;
 
+  protected static $balance_details_table = null;
+
   /**
    * Main instance
    *
