@@ -6,7 +6,7 @@
 /*
 Plugin Name: Coupon
 Description: A plugin for managing points system.
-Version: 1.0.45
+Version: 1.0.46
 Requires at least: 5.0
 Tested up to: 6.1
 Requires PHP: 5.2
@@ -38,7 +38,7 @@ if (!defined('SZCS_COUPON_ABSPATH')) {
 
 // Define SZCS_COUPON_PLUGIN_VERSION.
 if (!defined('SZCS_COUPON_PLUGIN_VERSION')) {
-	define('SZCS_COUPON_PLUGIN_VERSION', '1.0.45');
+	define('SZCS_COUPON_PLUGIN_VERSION', '1.0.46');
 }
 
 // include dependencies file.

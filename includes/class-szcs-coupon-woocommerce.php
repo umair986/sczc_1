@@ -233,16 +233,32 @@ class SzCsCouponWC
 
           // set category points to null for comparision
           $cat_points = null;
+          $depth = 0;
           foreach ($category_ids as $cat_id) {
 
             // loop through all the categories and get points
             $current_cat_points = get_term_meta($cat_id, 'szcs_cat_points_field', true);
 
-            // compare with and get the highest available points
-            if ($cat_points < $current_cat_points) {
+            $cat = get_term($cat_id);
+            /*
+            If current category points is numeric
+            or is child category
 
-              // if found hight then previous higher set current to highter
-              $cat_points = $current_cat_points;
+            */
+            if (is_numeric($current_cat_points)) {
+
+              // to select the deepest category
+              $current_depth = 0;
+              while ($cat->parent != '0') {
+                $cat = get_term($cat->parent);
+                $current_depth++;
+              }
+
+              // if current category is deeper than the previous one
+              if ($current_depth > $depth || $cat_points == null) {
+                $depth = $current_depth;
+                $cat_points = $current_cat_points;
+              }
             }
           }
         }
