@@ -42,7 +42,7 @@ class SzCsCouponSettings
 
 
     /**
-     * Register our wporg_settings_init to the admin_init action hook.
+     * Register our settings_init to the admin_init action hook.
      */
     add_action('admin_init', array($this, 'settings_init'));
   }
@@ -52,10 +52,10 @@ class SzCsCouponSettings
    */
   function settings_init()
   {
-    // Register a new setting for "wporg" page.
+    // Register a new setting for "szcs-coupon-settings" page.
     register_setting('szcs-coupon', 'szcs-coupon_options');
 
-    // Register a new section in the "wporg" page.
+    // Register a new section in the "szcs-coupon-settings" page.
     add_settings_section(
       'szcs_coupon_section_membership',
       __('Membership', 'szcs-coupon'),
@@ -63,18 +63,55 @@ class SzCsCouponSettings
       'szcs-coupon'
     );
 
-    // Register a new field in the "szcs_coupon_section_membership" section, inside the "wporg" page.
+    add_settings_section(
+      'szcs_coupon_section_category',
+      __('Category Options', 'szcs-coupon'),
+      '',
+      'szcs-coupon'
+    );
+
+    // Register a new field in the "szcs_coupon_section_membership" section, inside the "szcs-coupon-settings" page.
+
+
     add_settings_field(
       'szcs_coupon_member_only', // As of WP 4.6 this value is used only internally.
       // Use $args' label_for to populate the id inside the callback.
       __('Member Only', 'szcs-coupon'),
-      array($this, 'field_member_only_cb'),
+      array($this, 'field_cb'),
       'szcs-coupon',
       'szcs_coupon_section_membership',
       array(
         'label'         => 'Member Only',
         'label_for'         => 'szcs-coupon-member-only',
         'helper_text'        => 'Only logged in user can access the site'
+      )
+    );
+
+    add_settings_field(
+      'szcs_coupon_auto_select_parent_category', // As of WP 4.6 this value is used only internally.
+      // Use $args' label_for to populate the id inside the callback.
+      __('Auto Select Category', 'szcs-coupon'),
+      array($this, 'field_cb'),
+      'szcs-coupon',
+      'szcs_coupon_section_category',
+      array(
+        'label'         => 'Auto Select Category',
+        'label_for'         => 'szcs-coupon-auto-parent-category',
+        'helper_text'        => 'Auto select parent sategory'
+      )
+    );
+
+    add_settings_field(
+      'szcs_coupon_prefer_child_category', // As of WP 4.6 this value is used only internally.
+      // Use $args' label_for to populate the id inside the callback.
+      __('Prefer Child Category', 'szcs-coupon'),
+      array($this, 'field_cb'),
+      'szcs-coupon',
+      'szcs_coupon_section_category',
+      array(
+        'label'         => 'Prefer Child Category',
+        'label_for'         => 'szcs-coupon-prefer-child-category',
+        'helper_text'        => 'Prefer child category points'
       )
     );
   }
@@ -100,7 +137,7 @@ class SzCsCouponSettings
    *
    * @param array $args
    */
-  function field_member_only_cb($args)
+  function field_cb($args)
   {
     // Get the value of the setting we've registered with register_setting()
     $options = get_option('szcs-coupon_options');

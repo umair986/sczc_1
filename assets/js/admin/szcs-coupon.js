@@ -322,3 +322,52 @@ function showNotification($, message, type = 'error'){
 function hideNotification($){
   $('.szcs-coupon-notice').remove();
 }
+
+
+
+// auto select category and brand
+jQuery(function($) {
+
+  if(SZCS_VARS.autoSelectCategory){
+
+    var taxonomies = ['product_cat', 'product_brand'];
+
+    function checkParents(checkbox, taxonomy){
+      var parent = checkbox.closest('.children').closest('li').find('input[type="checkbox"]:first');
+      
+      while(parent.length){
+        var all = $(`#${taxonomy}div input[value="${parent.val()}"]`);
+        all.prop('checked', true);
+        parent = parent.closest('.children').closest('li').find('input[type="checkbox"]:first');
+      }
+    }
+    
+    function unCheckAllChildren(checkbox, taxonomy){
+      var children = $(`#${taxonomy}div input[value="${checkbox.val()}"]`).closest('li').find('input[type="checkbox"]');
+      children.each(function(){
+        $(this).prop('checked', false);
+        $(`#${taxonomy}-pop input[value="${$(this).val()}"]`).prop('checked', false);
+      });
+    }
+    
+    taxonomies.forEach((taxonomy) => {
+    $(`#${taxonomy}div`).on('click', 'input[type="checkbox"]', function(e){
+      var checkbox = $(this);
+      if(checkbox.is(':checked')){
+        var original = $(`#${taxonomy}-all input[value="${checkbox.val()}"]`);
+        checkParents(original, taxonomy);
+      }
+    });
+  });
+
+  // uncheck children when parent is unchecked
+  taxonomies.forEach((taxonomy) => {
+    $(`#${taxonomy}div`).on('click', `input[type="checkbox"]`, function(e){
+      var checkbox = $(this);
+      if(!checkbox.is(':checked')){
+        unCheckAllChildren(checkbox, taxonomy);
+      }
+    });
+  });
+}
+});
