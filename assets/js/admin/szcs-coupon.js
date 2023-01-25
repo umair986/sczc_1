@@ -148,11 +148,13 @@ jQuery(function($) {
   var brandField = $tr.find('td.szcs_brand_points_field');
   // Update field
   if(catField.length){
-    cat = parseFloat(catField.text()) || '';
+    cat = parseFloat(catField.text());
+    cat = cat >= 0 ? cat : '';
     $('tr.inline-edit-row :input[name="szcs_cat_points_field"]').val(cat);
   }
   if(brandField.length){
-    brand = parseFloat(brandField.text()) || '';
+    brand = parseFloat(brandField.text());
+    brand = brand >= 0 ? brand : '';
     $('tr.inline-edit-row :input[name="szcs_brand_points_field"]').val(brand);
   }
 });
@@ -199,7 +201,6 @@ jQuery(function($) {
         type: 'number',
         name: 'szcs_points_field',
         id: 'szcs_points_field',
-        step: '0.01',
         min: '0',
       });
 

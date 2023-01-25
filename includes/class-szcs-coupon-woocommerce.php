@@ -398,7 +398,7 @@ class SzCsCouponWC
     <tr class="form-field">
       <th scope="row" valign="top"><label for="szcs_cat_points_field"><?php _e('Points (%)', 'szcs-coupon'); ?></label></th>
       <td>
-        <input type="number" name="szcs_cat_points_field" id="szcs_cat_points_field" value="<?php echo esc_attr($points) ? esc_attr($points) : ''; ?>">
+        <input type="number" name="szcs_cat_points_field" id="szcs_cat_points_field" value="<?php echo is_numeric(esc_attr($points)) ? esc_attr($points) : ''; ?>">
       </td>
     </tr>
   <?php
@@ -438,7 +438,7 @@ class SzCsCouponWC
     <tr class="form-field">
       <th scope="row" valign="top"><label for="szcs_brand_points_field"><?php _e('Points (%)', 'szcs-coupon'); ?></label></th>
       <td>
-        <input type="number" name="szcs_brand_points_field" id="szcs_brand_points_field" value="<?php echo esc_attr($points) ? esc_attr($points) : ''; ?>">
+        <input type="number" name="szcs_brand_points_field" id="szcs_brand_points_field" value="<?php echo is_numeric(esc_attr($points)) ? esc_attr($points) : ''; ?>">
       </td>
     </tr>
     <?php
