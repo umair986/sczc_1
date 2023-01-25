@@ -65,6 +65,25 @@ class SzCsCouponWC
 
 
     add_action('woocommerce_order_status_cancelled', array($this, 'wc_order_point_refund'), 10, 1);
+
+
+    add_filter('manage_edit-product_cat_columns', array($this, 'register_cat_point_cloumn'));
+    add_filter('manage_edit-product_brand_columns', array($this, 'register_brand_point_cloumn'));
+
+
+    add_filter('manage_product_cat_custom_column', array($this, 'point_column_display'), 10, 3);
+    add_filter('manage_product_brand_custom_column', array($this, 'point_column_display'), 10, 3);
+
+    add_action('quick_edit_custom_box', array($this, 'quick_edit_category_field'), 10, 3);
+
+    add_action('edited_edition', array($this, 'quick_edit_save_category_field'));
+    add_action('edited_edition', array($this, 'quick_edit_save_brand_field'));
+
+    // add filter for bulk edit points in category
+    add_filter('bulk_actions-edit-product_cat', array($this, 'register_edit_bulk_action'));
+
+    // add filter for bulk edit points in brand
+    add_filter('bulk_actions-edit-product_brand', array($this, 'register_edit_bulk_action'));
   }
 
 
@@ -379,7 +398,7 @@ class SzCsCouponWC
     <tr class="form-field">
       <th scope="row" valign="top"><label for="szcs_cat_points_field"><?php _e('Points (%)', 'szcs-coupon'); ?></label></th>
       <td>
-        <input type="number" name="szcs_cat_points_field" id="szcs_cat_points_field" value="<?php echo esc_attr($points) ? esc_attr($points) : ''; ?>">
+        <input type="number" name="szcs_cat_points_field" id="szcs_cat_points_field" value="<?php echo is_numeric(esc_attr($points)) ? esc_attr($points) : ''; ?>">
       </td>
     </tr>
   <?php
@@ -419,10 +438,10 @@ class SzCsCouponWC
     <tr class="form-field">
       <th scope="row" valign="top"><label for="szcs_brand_points_field"><?php _e('Points (%)', 'szcs-coupon'); ?></label></th>
       <td>
-        <input type="number" name="szcs_brand_points_field" id="szcs_brand_points_field" value="<?php echo esc_attr($points) ? esc_attr($points) : ''; ?>">
+        <input type="number" name="szcs_brand_points_field" id="szcs_brand_points_field" value="<?php echo is_numeric(esc_attr($points)) ? esc_attr($points) : ''; ?>">
       </td>
     </tr>
-<?php
+    <?php
   }
 
   // Save brand points.
@@ -433,6 +452,76 @@ class SzCsCouponWC
       update_term_meta($term_id, 'szcs_brand_points_field', $points);
     }
   }
+
+  // register column for point in category table
+  function register_cat_point_cloumn($columns)
+  {
+    $columns = array_slice($columns, 0, 2, true) +
+      array('szcs_cat_points_field' => __('Points', 'szcs-coupon')) +
+      array_slice($columns, 2, count($columns) - 1, true);
+
+    return $columns;
+  }
+
+  // register column for point in brand table
+  function register_brand_point_cloumn($columns)
+  {
+    $columns = array_slice($columns, 0, 2, true) +
+      array('szcs_brand_points_field' => __('Points', 'szcs-coupon')) +
+      array_slice($columns, 2, count($columns) - 1, true);
+
+    return $columns;
+  }
+
+  // display ponts in category table and brand table
+  function point_column_display($string = '', $column_name, $term_id)
+  {
+    if ($column_name == 'szcs_brand_points_field' || $column_name == 'szcs_cat_points_field') {
+      $points = get_term_meta($term_id, $column_name, true);
+      if ($points >= 0 && $points <= 100 && $points != '') {
+        $string = $points . '%';
+      } else {
+        $string = '—';
+      }
+      return esc_html($string);
+    }
+  }
+
+  function quick_edit_category_field($column_name, $page, $screen)
+  {
+    // If we're not iterating over our custom column, then skip
+    if (($screen == 'product_cat' && $column_name == 'szcs_cat_points_field') || ($screen == 'product_brand' && $column_name == 'szcs_brand_points_field')) {
+    ?>
+
+      <fieldset>
+        <div id="<?php echo esc_attr($column_name); ?>" class="inline-edit-col">
+          <label>
+            <span class="title"><?php _e('Points(%)', 'szcs-coupon'); ?></span>
+            <span class="input-text-wrap"><input type="number" name="<?php echo esc_attr($column_name); ?>" class="ptitle" value=""></span>
+          </label>
+        </div>
+      </fieldset>
+<?php
+    }
+  }
+
+  function quick_edit_save_category_field($term_id)
+  {
+    if (isset($_POST['szcs_cat_points_field'])) {
+      // security tip: kses
+      update_term_meta($term_id, 'szcs_cat_points_field', filter_input(INPUT_POST, 'szcs_cat_points_field'));
+    }
+  }
+
+
+  function quick_edit_save_brand_field($term_id)
+  {
+    if (isset($_POST['szcs_brand_points_field'])) {
+      // security tip: kses
+      update_term_meta($term_id, 'szcs_brand_points_field', filter_input(INPUT_POST, 'szcs_brand_points_field'));
+    }
+  }
+
 
 
   public function wc_order_processed($order_id)
@@ -537,6 +626,16 @@ class SzCsCouponWC
       ));
       $order->save();
     }
+  }
+
+  // add Edit Points option to bulk actions
+  public function register_edit_bulk_action($bulk_actions)
+  {
+
+    $bulk_actions['edit_points'] = __('Edit Points', 'szcs-coupon');
+    unset($bulk_actions['delete']); // Remove "Delete" bulk action
+    $bulk_actions['delete'] = __('Delete', 'szcs-coupon'); // Add "Delete" bulk action back to the end of the list
+    return $bulk_actions;
   }
 }
 

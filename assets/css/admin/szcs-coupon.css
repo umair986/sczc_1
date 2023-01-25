@@ -88,3 +88,74 @@
   background-size: 20px 20px;
   transform: translateZ(0);
 }
+
+#szcs_change_points_screen {
+  position: fixed;
+  background-color: #00000055;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.szcs_change_points_content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  position: relative;
+}
+
+.szcs_change_points_content .szcs_change_points_close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
+}
+
+#szcs_change_points_screen .form-field input {
+  width: 100%;
+}
+
+#szcs_change_points_screen .dashicons {
+  height: auto;
+  width: auto;
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  position: absolute;
+  top: 8px;
+  right: 2px;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#szcs_change_points_screen .dashicons:hover {
+  opacity: 1;
+}
+
+
+#szcs_coupon_loading {
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+#szcs_coupon_loading:before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -10px 0 0 -10px;
+  background: url(../../../../../../wp-includes/images/spinner.gif) no-repeat center;
+  background-size: 20px 20px;
+  transform: translateZ(0);
+}
