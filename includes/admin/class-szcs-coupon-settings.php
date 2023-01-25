@@ -101,19 +101,21 @@ class SzCsCouponSettings
       )
     );
 
-    add_settings_field(
-      'szcs_coupon_prefer_child_category', // As of WP 4.6 this value is used only internally.
-      // Use $args' label_for to populate the id inside the callback.
-      __('Prefer Child Category', 'szcs-coupon'),
-      array($this, 'field_cb'),
-      'szcs-coupon',
-      'szcs_coupon_section_category',
-      array(
-        'label'         => 'Prefer Child Category',
-        'label_for'         => 'szcs-coupon-prefer-child-category',
-        'helper_text'        => 'Prefer child category points'
-      )
-    );
+    /**
+     add_settings_field(
+       'szcs_coupon_prefer_child_category', // As of WP 4.6 this value is used only internally.
+       // Use $args' label_for to populate the id inside the callback.
+       __('Prefer Child Category', 'szcs-coupon'),
+       array($this, 'field_cb'),
+       'szcs-coupon',
+       'szcs_coupon_section_category',
+       array(
+         'label'         => 'Prefer Child Category',
+         'label_for'         => 'szcs-coupon-prefer-child-category',
+         'helper_text'        => 'Prefer child category points'
+         )
+         );
+     */
   }
   public function admin_menu($parent_slug)
   {
