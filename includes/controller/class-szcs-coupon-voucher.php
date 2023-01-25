@@ -188,6 +188,7 @@ if (!class_exists('SzCsCouponVoucher')) {
           'voucher_amount' => $voucher_amount,
           'usage_limit_per_voucher' => 1,
           'usage_limit_per_user' => 1,
+          'vendor_id' => -1,
         )
       );
     }

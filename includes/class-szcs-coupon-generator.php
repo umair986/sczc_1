@@ -80,6 +80,7 @@ class SzCsCouponGenerator
       'expiry_date' => $_POST["expiry_date"],
       'usage_limit_per_voucher' => $_POST["usage_limit_per_voucher"],
       'usage_limit_per_user' => $_POST["usage_limit_per_user"],
+      'vendor_id' => $_POST["vendor"],
     ));
     szcs_redirect(admin_url('edit.php?post_type=szcs_coupons_code'), array());
   }
@@ -89,6 +90,18 @@ class SzCsCouponGenerator
    */
   public function page_html()
   {
+    // check user capabilities
+    if (!current_user_can('manage_options')) {
+      return;
+    }
+
+    $get_vendors = get_users(array(
+      'role' => 'vendor',
+      'orderby' => 'display_name',
+      'order' => 'ASC',
+      'fields' => array('ID', 'display_name')
+    ));
+
 ?>
     <div class="wrap">
       <h1 class="wp-heading-inline"><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -144,6 +157,21 @@ class SzCsCouponGenerator
                 <input type="number" class="regular-text" name="number_of_coupons" id="number_of_coupons" value="" placeholder="1" pattern="[1-9]{1,3}" required>
               </td>
             </tr>
+
+            <tr>
+              <th scope="row">
+                <label for="vendor">Vendor</label>
+              </th>
+              <td>
+                <select name="vendor" id="vendor">
+                  <option value="">Select vendor</option>
+                  <?php foreach ($get_vendors as $vendor) : ?>
+                    <option value="<?php echo $vendor->ID; ?>"><?php echo $vendor->display_name; ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </td>
+            </tr>
+
           </tbody>
 
         </table>

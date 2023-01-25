@@ -81,12 +81,19 @@ class SzCsCouponAdmin
 
     $customVar = array(
       'siteurl' => get_option('siteurl'),
-      'couponGeneratorUrl' => admin_url('admin.php?page=szcs-coupon-generator'),
-      'screenId' => $screen_id,
-      'ajaxUrl' => admin_url('admin-ajax.php'),
-      'nonce' => wp_create_nonce('szcs-coupon-nonce'),
-      'autoSelectCategory' => get_option('szcs-coupon_options')['szcs-coupon-auto-parent-category'] == '1' ? true : false,
     );
+
+    if (is_admin()) {
+      $customVar = array(
+        'siteurl' => get_option('siteurl'),
+        'couponGeneratorUrl' => admin_url('admin.php?page=szcs-coupon-generator'),
+        'screenId' => $screen_id,
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('szcs-coupon-nonce'),
+        'autoSelectCategory' => get_option('szcs-coupon_options')['szcs-coupon-auto-parent-category'] == '1' ? true : false,
+      );
+    }
+
 
     wp_register_style('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/css/admin/szcs-coupon.css', array(), SZCS_COUPON_PLUGIN_VERSION, 'all');
     wp_register_script('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/admin/szcs-coupon.js', array('jquery'), SZCS_COUPON_PLUGIN_VERSION, false);
