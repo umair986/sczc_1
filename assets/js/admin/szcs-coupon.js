@@ -250,7 +250,7 @@ jQuery(function($) {
         // get the points value
         var points = parseFloat(pointsValue);
 
-        if(points < 0 || points > 100 || isNaN(points)){
+        if(pointsValue !== ''  && (points < 0 || points > 100)){
           showNotification($, 'Points must be between 0 and 100', 'error');
           wrapper.fadeOut(300, function(){
             wrapper.remove();
@@ -288,7 +288,11 @@ jQuery(function($) {
                 if(term.length){
                   var pointsField = term.find('td[data-colname="Points"]');
                   if(pointsField.length){
-                    pointsField.text(points+'%');
+                    if(pointsValue){
+                      pointsField.text(points+'%');
+                    }else{
+                      pointsField.text('—');
+                    }
                   }
                 }
               });

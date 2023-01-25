@@ -63,7 +63,6 @@ class SzCsCouponAJAX
 
     if (
       isset($_REQUEST['points'])
-      && !empty($_REQUEST['points'])
       && isset($_REQUEST['delete_tags'])
       && is_array($_REQUEST['delete_tags'])
       && isset($_REQUEST['taxonomy'])
@@ -71,10 +70,10 @@ class SzCsCouponAJAX
       && isset($_REQUEST['nonce'])
       && wp_verify_nonce($_REQUEST['nonce'], 'szcs-coupon-nonce')
     ) {
-      $points = (float) $_REQUEST['points'];
+      $points = $_REQUEST['points'];
 
       // if points is less than 0 or greater than 100 send error
-      if ($points < 0 || $points > 100) {
+      if (is_numeric($points) && ($points < 0 || $points > 100)) {
         wp_send_json(array('success' => false, 'message' => __('Points must be between 0 and 100', 'szcs-coupon')));
         exit();
       }
