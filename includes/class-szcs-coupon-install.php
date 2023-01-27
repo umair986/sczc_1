@@ -79,15 +79,22 @@ class SzCsCoupon_Install
       "CREATE TABLE {$wpdb->base_prefix}szcs_voucher_points (
             voucher_id bigint(20) NOT NULL AUTO_INCREMENT,
             post_id bigint(20) NOT NULL,
+            vendor_id bigint(20) NULL,
+            batch_id bigint(20) NULL,
             voucher_no varchar(255) NOT NULL,
             voucher_amount bigint(20) NOT NULL,
             create_date date NOT NULL DEFAULT current_timestamp(),
             expiry_date date NOT NULL,
             usage_limit_per_voucher int(20) NOT NULL DEFAULT 1,
             usage_limit_per_user int(20) NOT NULL DEFAULT 1,
-            vendor_id bigint(20) NULL,
             status varchar(50) NOT NULL DEFAULT 'active',
             PRIMARY KEY (voucher_id)
+          ) $collate;",
+      "CREATE TABLE {$wpdb->base_prefix}szcs_voucher_batch (
+            batch_id bigint(20) NOT NULL AUTO_INCREMENT,
+            vendor_id bigint(20) NULL,
+            create_time timestamp NOT NULL DEFAULT current_timestamp(),
+            PRIMARY KEY (batch_id)
           ) $collate;"
     ];
 
@@ -104,8 +111,16 @@ class SzCsCoupon_Install
         array(
           'read' => true, // true allows this capability
           'view_admin_dashboard' => true,
+          'export_vouchers' => true,
         )
       );
+      // add_capabilites to admin
+      $role = get_role('administrator');
+      $role->add_cap('export_vouchers');
+
+      // add_capabilites to shop_manager
+      $role = get_role('shop_manager');
+      $role->add_cap('export_vouchers');
     }
   }
 }

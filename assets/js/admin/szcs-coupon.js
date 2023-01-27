@@ -317,10 +317,17 @@ jQuery(function($) {
 
 function showNotification($, message, type = 'error'){
   hideNotification($);
-  var notice = $('<div />').attr({
+
+  var element = $('.wp-header-end');
+
+  if(!element.length){ 
+    var element = $('.wp-heading-inline');
+  }
+
+  $('<div />').attr({
     id: 'message',
     class: type +' szcs-coupon-notice',
-  }).append($('<p />').html(message)).insertAfter('.wp-header-end');
+  }).append($('<p />').html(message)).insertAfter(element);
 
 }
 
@@ -373,6 +380,48 @@ jQuery(function($) {
         unCheckAllChildren(checkbox, taxonomy);
       }
     });
+  });
+
+
+  // export batch button
+  $('[data-target="szcs-export-batch"]').click(function(e){
+    e.preventDefault();
+
+    var formData = new FormData();
+
+    formData.append('action', 'szcs_export_batch');
+    formData.append('nonce', SZCS_VARS.nonce);
+    var batchId = $(this).data('batch-id');
+    formData.append('batch_id', batchId);
+
+    $(this).addClass('disabled');
+    $(this).find('.text').text('Exporting...');
+    $(this).find('.dashicons').addClass('dashicons-update rotating').removeClass('dashicons-share-alt2');
+
+
+    hideNotification($);
+    
+    fetch(`${SZCS_VARS.ajaxUrl}`, {
+      method: 'post',
+      body: formData,
+    }).then(res => {
+      return res.json();
+    }).then(data => {
+      if(data.success){
+        download(csvmaker(data.data), true);
+        showNotification($, data.message, 'updated');
+      }else{
+        showNotification($, data.message, 'error');
+      }
+    }).catch(err => {
+      showNotification($, 'Something went wrong', 'error');
+    })
+    .finally(() => {
+      $(this).find('.text').text('Export');
+      $(this).find('.dashicons').removeClass('dashicons-update rotating').addClass('dashicons-share-alt2');
+      $(this).removeClass('disabled');
+    });
+
   });
 }
 });

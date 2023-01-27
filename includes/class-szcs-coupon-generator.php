@@ -80,8 +80,7 @@ class SzCsCouponGenerator
       'expiry_date' => $_POST["expiry_date"],
       'usage_limit_per_voucher' => $_POST["usage_limit_per_voucher"],
       'usage_limit_per_user' => $_POST["usage_limit_per_user"],
-      'vendor_id' => $_POST["vendor"],
-    ));
+    ), $_POST["vendor"]);
     szcs_redirect(admin_url('edit.php?post_type=szcs_coupons_code'), array());
   }
 

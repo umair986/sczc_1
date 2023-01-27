@@ -50,11 +50,13 @@ class SzCsCouponAdmin
    */
   public function admin_menu()
   {
-    $slug = 'szcs-coupon-users';
+
+
+    $slug =  current_user_can('manage_woocommerce') ? 'szcs-coupon-users' : 'szcs-coupon-export';
     add_menu_page(
       __('Coupons', 'szcs-coupon'),
       __('Coupons', 'szcs-coupon'),
-      get_szcs_coupon_user_capability(),
+      'export_vouchers',
       $slug,
       '',
       'dashicons-tickets-alt',
@@ -94,11 +96,10 @@ class SzCsCouponAdmin
       );
     }
 
-
     wp_register_style('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/css/admin/szcs-coupon.css', array(), SZCS_COUPON_PLUGIN_VERSION, 'all');
     wp_register_script('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/admin/szcs-coupon.js', array('jquery'), SZCS_COUPON_PLUGIN_VERSION, false);
     wp_localize_script('szcs_coupons_admin', 'SZCS_VARS', $customVar);
-    if (in_array($screen_id, array('szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator', 'edit-product_cat', 'edit-product_brand', 'product'), true)) {
+    if (in_array($screen_id, array('szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator', 'edit-product_cat', 'edit-product_brand', 'product', 'coupons_page_szcs-coupon-export', 'toplevel_page_szcs-coupon-export'), true)) {
       wp_enqueue_script('szcs_coupons_admin');
       wp_enqueue_style('szcs_coupons_admin');
     }
