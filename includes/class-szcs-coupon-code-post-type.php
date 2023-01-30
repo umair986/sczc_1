@@ -149,6 +149,7 @@ class SzCsCouponCodePostType
       'title'                   => __('Code', 'szcs-coupon'),
       'voucher_amount'          => __('Coupon Amount', 'szcs-coupon'),
       'usage_limit_per_voucher' => __('Usage / Limit', 'szcs-coupon'),
+      'vendor_id'                  => __('Vendor', 'szcs-coupon'),
       'expiry_date'             => __('Expery data', 'szcs-coupon'),
       'date'                    => 'Creation Date'
     );
@@ -176,6 +177,9 @@ class SzCsCouponCodePostType
       global $szcs_coupon_transaction;
       $transactions = $voucher ? $szcs_coupon_transaction->get_transactions_by_voucher_id($voucher->voucher_id) : array();
       echo count($transactions) . '/' . $value;
+    } else if ($column === 'vendor_id') {
+      $vendor = get_user_by('id', $value);
+      echo $vendor ? $vendor->display_name : '—';
     } else {
       echo $value;
     }

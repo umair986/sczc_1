@@ -52,7 +52,7 @@ if (!class_exists('SzCsCouponVoucher')) {
       add_action('szcs_save_coupon', array($this, 'fetch_vouchers'));
       add_action('szcs_coupon_expired', array($this, 'mark_coupon_expired'));
       add_action('szcs_coupon_create_voucher', array($this, 'create_voucher'), 10, 3);
-      add_action('szcs_coupon_create_vouchers', array($this, 'create_vouchers'), 10, 3);
+      add_action('szcs_coupon_create_vouchers', array($this, 'create_vouchers'), 10, 4);
     }
 
     private static function get_vouchers()
@@ -66,7 +66,10 @@ if (!class_exists('SzCsCouponVoucher')) {
     public function fetch_vouchers()
     {
       global $wpdb;
-      self::$_vouchers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}szcs_voucher_points", OBJECT);
+      self::$_vouchers = $wpdb->get_results("
+        SELECT * FROM {$wpdb->prefix}szcs_voucher_points
+        LEFT JOIN {$wpdb->prefix}szcs_voucher_batch
+        ON {$wpdb->prefix}szcs_voucher_points.batch_id={$wpdb->prefix}szcs_voucher_batch.batch_id", OBJECT);
     }
 
     public static function get_voucher_by_post_id($post_id)
@@ -80,6 +83,23 @@ if (!class_exists('SzCsCouponVoucher')) {
       return array_filter(self::get_vouchers(), function ($v) use ($post_ids) {
         return in_array($v->post_id, $post_ids);
       });
+    }
+
+    public static function get_vouchers_by_batch_id($batch_id)
+    {
+
+      $vouchers = array_filter(self::get_vouchers(), function ($v) use ($batch_id) {
+        if ($v->batch_id === $batch_id) {
+          return true;
+        }
+        return false;
+      });
+
+      if (count($vouchers) && (current_user_can('manage_woocommerce') || array_values($vouchers)[0]->vendor_id == get_current_user_id())) {
+        return $vouchers;
+      }
+
+      return false;
     }
 
     public static function get_voucher($code)
@@ -149,10 +169,17 @@ if (!class_exists('SzCsCouponVoucher')) {
       do_action('szcs_save_coupon');
     }
 
-    public static function create_vouchers($voucher_amount, $count, $args)
+    public static function create_vouchers($voucher_amount, $count, $args, $vendor = false)
     {
+      global $wpdb;
       $prefix = isset($args['prefix']) ? $args['prefix'] : '000';
       $args['status'] = 'active';
+      if ($vendor) {
+        $wpdb->insert("{$wpdb->base_prefix}szcs_voucher_batch", array(
+          'vendor_id' => $vendor
+        ));
+        $args['batch_id'] = $wpdb->insert_id;
+      }
       for ($i = 0; $i < $count; $i++) {
         $args['voucher_no'] = self::get_new_code($prefix);
         $code_post = array(
@@ -188,6 +215,7 @@ if (!class_exists('SzCsCouponVoucher')) {
           'voucher_amount' => $voucher_amount,
           'usage_limit_per_voucher' => 1,
           'usage_limit_per_user' => 1,
+          'batch_id' => null,
         )
       );
     }

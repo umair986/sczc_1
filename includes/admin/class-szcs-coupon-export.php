@@ -5,17 +5,17 @@
  *
  * @package SzCsCoupon
  */
-class SzCsCouponUsers
+class SzCsCouponExport
 {
   /**
    * The single instance of the class.
    *
-   * @var SzCsCouponUsers
-   * @since 1.1.10
+   * @var SzCsCouponExport
+   * @since 1.1.1
    */
   protected static $_instance = null;
 
-  protected static $balance_details_table = null;
+  protected static $batch_details_table = null;
 
   /**
    * Main instance
@@ -36,21 +36,21 @@ class SzCsCouponUsers
    */
   public function __construct()
   {
-    add_action('szcs_admin_menu', array($this, 'admin_menu'), 0);
+    add_action('szcs_admin_menu', array($this, 'admin_menu'), 20);
   }
 
   public function admin_menu($parent_slug)
   {
-    if (wp_get_current_user()->roles[0] === 'vendor') return;
-    $szcs_coupon_users_menu_page_hook = add_submenu_page(
+
+    $szcs_coupon_menu_page_hook = add_submenu_page(
       $parent_slug,
-      __('Users Balance details', 'szcs-coupon'),
-      __('User Details', 'szcs-coupon'),
-      get_szcs_coupon_user_capability(),
-      $parent_slug,
+      __('Export Coupons', 'szcs-coupon'),
+      __('Export', 'szcs-coupon'),
+      'export_vouchers',
+      'szcs-coupon-export',
       [$this, 'page_html'],
     );
-    add_action("load-$szcs_coupon_users_menu_page_hook", array($this, 'add_szcs_coupon_details'));
+    add_action("load-$szcs_coupon_menu_page_hook", array($this, 'add_szcs_coupon_details'));
   }
 
 
@@ -66,9 +66,9 @@ class SzCsCouponUsers
       'option'  => 'users_per_page',
     );
     add_screen_option($option, $args);
-    include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-balance-details.php';
-    $this->balance_details_table = new SzCs_Coupon_Balance_Details();
-    $this->balance_details_table->prepare_items();
+    include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-batch-details.php';
+    $this->batch_details_table = new SzCs_Coupon_Batch_Details();
+    $this->batch_details_table->prepare_items();
   }
 
   /**
@@ -79,14 +79,14 @@ class SzCsCouponUsers
 ?>
     <div class="wrap">
       <h1 class="wp-heading-inline"><?php echo esc_html(get_admin_page_title()); ?></h1>
-      <?php $this->balance_details_table->views(); ?>
+      <?php $this->batch_details_table->views(); ?>
       <form id="coupon-users" method="post">
-        <?php $this->balance_details_table->search_box(__('Search', 'szcs-coupon'), 'search_id'); ?>
-        <?php $this->balance_details_table->display(); ?>
+        <?php $this->batch_details_table->search_box(__('Search', 'szcs-coupon'), 'search_id'); ?>
+        <?php $this->batch_details_table->display(); ?>
       </form>
     </div>
 <?php
   }
 }
 
-SzCsCouponUsers::instance();
+SzCsCouponExport::instance();

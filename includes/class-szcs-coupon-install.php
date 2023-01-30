@@ -25,6 +25,7 @@ class SzCsCoupon_Install
       return;
     }
     self::create_tables();
+    self::create_roles();
   }
   /**
    * Plugins table creation
@@ -56,39 +57,70 @@ class SzCsCoupon_Install
     }
     $tables = [
       "CREATE TABLE IF NOT EXISTS {$wpdb->base_prefix}szcs_transaction_points (
-            trans_point_id int(11) NOT NULL AUTO_INCREMENT,
-            user_id int(11) NOT NULL,
+            trans_point_id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
             description text NOT NULL,
             debit_points float NOT NULL DEFAULT 0,
             credit_points float NOT NULL DEFAULT 0,
             closing_balance float NOT NULL,
-            voucher_id int(11) NULL,
+            voucher_id bigint(20) NULL,
             voucher_no varchar(255) NULL,
             order_dateTime datetime NOT NULL DEFAULT current_timestamp(),
             status varchar(50) NULL,
             PRIMARY KEY (trans_point_id)
           ) $collate",
       "CREATE TABLE {$wpdb->base_prefix}szcs_user_points (
-            user_point_id int(11) NOT NULL AUTO_INCREMENT,
-            user_id int(11) NOT NULL,
+            user_point_id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
             wallet_points float NOT NULL,
             status varchar(255) NOT NULL DEFAULT 'active',
             PRIMARY KEY (user_point_id)
           ) $collate",
       "CREATE TABLE {$wpdb->base_prefix}szcs_voucher_points (
-            voucher_id int(11) NOT NULL AUTO_INCREMENT,
-            post_id int(11) NOT NULL,
+            voucher_id bigint(20) NOT NULL AUTO_INCREMENT,
+            post_id bigint(20) NOT NULL,
+            vendor_id bigint(20) NULL,
+            batch_id bigint(20) NULL,
             voucher_no varchar(255) NOT NULL,
-            voucher_amount int(11) NOT NULL,
+            voucher_amount bigint(20) NOT NULL,
             create_date date NOT NULL DEFAULT current_timestamp(),
             expiry_date date NOT NULL,
-            usage_limit_per_voucher int(11) NOT NULL DEFAULT 1,
-            usage_limit_per_user int(11) NOT NULL DEFAULT 1,
+            usage_limit_per_voucher int(20) NOT NULL DEFAULT 1,
+            usage_limit_per_user int(20) NOT NULL DEFAULT 1,
             status varchar(50) NOT NULL DEFAULT 'active',
             PRIMARY KEY (voucher_id)
+          ) $collate;",
+      "CREATE TABLE {$wpdb->base_prefix}szcs_voucher_batch (
+            batch_id bigint(20) NOT NULL AUTO_INCREMENT,
+            vendor_id bigint(20) NULL,
+            create_time timestamp NOT NULL DEFAULT current_timestamp(),
+            PRIMARY KEY (batch_id)
           ) $collate;"
     ];
 
     return $tables;
+  }
+
+  public static function create_roles()
+  {
+    $role = get_role('vendor');
+    if (empty($role)) {
+      add_role(
+        'vendor',
+        __('Vendor', 'szcs-coupon'),
+        array(
+          'read' => true, // true allows this capability
+          'view_admin_dashboard' => true,
+          'export_vouchers' => true,
+        )
+      );
+      // add_capabilites to admin
+      $role = get_role('administrator');
+      $role->add_cap('export_vouchers');
+
+      // add_capabilites to shop_manager
+      $role = get_role('shop_manager');
+      $role->add_cap('export_vouchers');
+    }
   }
 }

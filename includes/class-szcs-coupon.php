@@ -89,6 +89,7 @@ final class SzCsCoupon
     if ($this->is_request('admin')) {
       include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-admin.php';
       include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-users.php';
+      include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-export.php';
       include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-settings.php';
       include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-generator.php';
       include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-ajax.php';

@@ -13,7 +13,7 @@ if (!class_exists('WP_List_Table')) {
 /**
  * Coupon transaction details wp table class.
  */
-class SzCs_Coupon_Balance_Details extends WP_List_Table
+class SzCs_Coupon_Batch_Details extends WP_List_Table
 {
 
 
@@ -25,8 +25,13 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
   {
     global $wpdb;
     $users_table = $wpdb->prefix . 'users';
-    $points_table = $wpdb->prefix . 'szcs_user_points';
-    $users_query = "SELECT * FROM $users_table LEFT JOIN $points_table ON $users_table" . ".ID = $points_table" . ".user_id";
+    $batch_table = $wpdb->prefix . 'szcs_voucher_batch';
+    $voucher_table = $wpdb->prefix . 'szcs_voucher_points';
+    if (current_user_can('manage_woocommerce')) {
+      $users_query = "SELECT COUNT($batch_table.batch_id) as count,  $batch_table.*, $voucher_table.* ,  $users_table.user_login FROM $batch_table LEFT JOIN $voucher_table ON $batch_table.batch_id = $voucher_table" . ".batch_id LEFT JOIN $users_table ON $batch_table.vendor_id = $users_table.ID GROUP BY $voucher_table.batch_id ORDER BY $batch_table.batch_id DESC";
+    } else {
+      $users_query = "SELECT COUNT($batch_table.batch_id) as count,  $batch_table.*, $voucher_table.* ,  $users_table.user_login FROM $batch_table LEFT JOIN $voucher_table ON $batch_table.batch_id = $voucher_table" . ".batch_id LEFT JOIN $users_table ON $batch_table.vendor_id = $users_table.ID WHERE $batch_table.vendor_id = " . get_current_user_id() . " GROUP BY $voucher_table.batch_id ORDER BY $batch_table.batch_id DESC";
+    }
     $results = $wpdb->get_results($users_query, ARRAY_A);
     return $results;
   }
@@ -39,12 +44,12 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
     return apply_filters(
       'szcs_coupon_balance_details_columns',
       array(
-        // 'cb'       => __('cb', 'szcs-coupon'),
-        'ID'       => __('ID', 'szcs-coupon'),
-        'username' => __('Username', 'szcs-coupon'),
-        'display_name' => __('Name', 'szcs-coupon'),
-        'user_email' => __('Email', 'szcs-coupon'),
-        'wallet_points' => __('Remaining balance', 'szcs-coupon'),
+        //      'cb'       => __('cb', 'szcs-coupon'),
+        'batch_id'       => __('ID', 'szcs-coupon'),
+        'username' => __('Vendor', 'szcs-coupon'),
+        'voucher_amount' => __('Coupon Amount', 'szcs-coupon'),
+        'count' => __('Count', 'szcs-coupon'),
+        'create_date' => __('Creation Date', 'szcs-coupon'),
         'actions'  => __('Actions', 'szcs-coupon'),
       )
     );
@@ -57,7 +62,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
    */
   public function no_items()
   {
-    esc_html_e('No users found.', 'szcs-coupon');
+    esc_html_e('No Vouchers found.', 'szcs-coupon');
   }
   /**
    * Prepare the items for the table to process
@@ -113,7 +118,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
    *
    * @return array An array of HTML links, one for each view.
    */
-  protected function get_views()
+  protected function get_viewsSKIP()
   {
     global $role;
 
@@ -190,7 +195,13 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
    */
   public function get_hidden_columns()
   {
-    return array('ID');
+    if (wp_get_current_user()->roles[0] === 'vendor') {
+      return array(
+        'username'
+      );
+    }
+
+    return array();
   }
 
   /**
@@ -199,7 +210,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
   protected function get_bulk_actions()
   {
     $actions = apply_filters(
-      'szcs_coupon_balance_details_bulk_actions',
+      'szcs_coupon_batch_details_bulk_actions',
       array(
         //        'export'     => __('Export', 'szcs-coupon'),
         //        'debit'      => __('Debit', 'szcs-coupon'),
@@ -219,10 +230,11 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
     $sortable_columns = array(
       'username' => array('user_login', false),
       'display_name' => array('display_name', false),
-      'user_email' => array('user_email', false),
-      'wallet_points' => array('wallet_points', false),
+      'voucher_amount' => array('voucher_amount', false),
+      'create_date' => array('create_date', false),
+      'count' => array('count', true),
     );
-    return apply_filters('szcs_coupon_balance_details_sortable_columns', $sortable_columns);
+    return apply_filters('szcs_coupon_batch_details_sortable_columns', $sortable_columns);
   }
 
   /**
@@ -236,9 +248,12 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
   public function column_default($item, $column_name)
   {
     switch ($column_name) {
-      case 'ID':
+      case 'batch_id':
+        return $item[$column_name] ? $item['user_login'] . '_' . $item[$column_name] : '';
       case 'display_name':
-      case 'user_email':
+      case 'voucher_amount':
+      case 'create_date':
+      case 'count':
         return $item[$column_name] ? $item[$column_name] : '';
       case 'username':
         return $item['user_login'];
@@ -249,16 +264,10 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
           array(
             'user_id' => $item['ID'],
           ),
-          admin_url('user-edit.php')
-        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px"></a> <a class="button dashicons dashicons-visibility"  style="width: 35px" href="' . add_query_arg(
-          array(
-            'page'    => 'szcs-coupon-transactions',
-            'user_id' => $item['ID'],
-          ),
-          admin_url('admin.php')
-        ) . '"></a></p>';
-        //case 'cb':
-        //return '<input type="checkbox" />';
+          admin_url('#')
+        ) . '" class="button" data-batch-id="' . $item['batch_id'] . '" data-target="szcs-export-batch" title="export"  style="width: auto;display: inline-flex;align-items: center;justify-content: center;gap: 5px;"><span class="text">Export</span> <span class="dashicons dashicons-share-alt2"></span></a></p>';
+        //      case 'cb':
+        //      return '<input type="checkbox" />';
       default:
         return apply_filters('szcs_coupon_balance_details_column_default', print_r($item, true), $column_name, $item);
     }
