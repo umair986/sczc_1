@@ -160,8 +160,19 @@
   transform: translateZ(0);
 }
 
+.szcs-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
 .rotating {
   animation: rotating 2s linear infinite;
+}
+
+.tablenav .actions {
+  margin-top: 0;
 }
 
 @keyframes rotating {
