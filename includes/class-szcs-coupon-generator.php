@@ -81,7 +81,7 @@ class SzCsCouponGenerator
       'usage_limit_per_voucher' => $_POST["usage_limit_per_voucher"],
       'usage_limit_per_user' => $_POST["usage_limit_per_user"],
     ), $_POST["vendor"]);
-    szcs_redirect(admin_url('edit.php?post_type=szcs_coupons_code'), array());
+    szcs_redirect(admin_url(add_query_arg(array('page' => 'szcs-coupon-generator'), 'admin.php')));
   }
 
   /**
@@ -178,7 +178,12 @@ class SzCsCouponGenerator
           <input type="hidden" name="action" value="coupon-generator">
           <?php wp_nonce_field('coupon-generate', 'szcs_coupon_nonce'); ?>
           <input type="submit" name="submit" id="submit" class="button button-primary" value="Generate Coupons">
-        </p>
+          <?php if ($back_id = get_option('szcs_voucher_batch_id')) : ?>
+            <span style="padding-left: 1rem;">Coupons generated successfully </span> <a href="#" class="" data-batch-id="<?= $back_id; ?>" data-target="szcs-export-batch">Export Now</a>
+        <p class="description">You can always export already genarated coupons either from Coupons->Coupons page or Coupons->Export page</p>
+        <?php update_option('szcs_voucher_batch_id', '') ?>
+      <?php endif; ?>
+      </p>
       </form>
     </div>
 <?php

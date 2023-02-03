@@ -179,6 +179,7 @@ if (!class_exists('SzCsCouponVoucher')) {
           'vendor_id' => $vendor
         ));
         $args['batch_id'] = $wpdb->insert_id;
+        update_option('szcs_voucher_batch_id', $args['batch_id']);
       }
       for ($i = 0; $i < $count; $i++) {
         $args['voucher_no'] = self::get_new_code($prefix);
