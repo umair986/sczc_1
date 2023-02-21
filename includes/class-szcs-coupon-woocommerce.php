@@ -257,11 +257,17 @@ class SzCsCouponWC
     // if product found
     if (!empty($product)) {
 
+      if ($product->get_type() == 'variation') {
+        $main_product = wc_get_product($product->get_parent_id());
+      } else {
+        $main_product = $product;
+      }
+
       // when type is either brand or empty get brand's pionts percentage
       if ($type != 'category' || $type != 'product') {
 
         // get brand ids
-        $brand_id =  wp_get_post_terms($product->get_id(), 'product_brand', array('fields' => 'ids'));
+        $brand_id =  wp_get_post_terms($main_product->get_id(), 'product_brand', array('fields' => 'ids'));
 
         // if brand ids found
         if (!empty($brand_id)) {
@@ -275,7 +281,7 @@ class SzCsCouponWC
       if ($type != 'brand' || $type != 'product') {
 
         // get categories ids
-        $category_ids = $product->get_category_ids();
+        $category_ids = $main_product->get_category_ids();
 
         // if categories id found
         if (!empty($category_ids)) {
