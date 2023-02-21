@@ -38,6 +38,7 @@ class SzCsCouponWC
    */
   public function __construct()
   {
+    add_action('woocommerce_variation_options_pricing', array($this, 'wc_product_variation_points_field'), 10, 3);
     add_action('woocommerce_product_options_general_product_data', array($this, 'wc_product_points_field'));
     add_action('woocommerce_process_product_meta', array($this, 'wc_product_save_points'));
     add_action('woocommerce_single_product_summary', array($this, 'wc_product_display_redeemable_points'), 30);
@@ -84,6 +85,9 @@ class SzCsCouponWC
 
     // add filter for bulk edit points in brand
     add_filter('bulk_actions-edit-product_brand', array($this, 'register_edit_bulk_action'));
+
+
+    add_action('woocommerce_save_product_variation', array($this, 'wc_product_variation_save_points'), 10, 2);
   }
 
 
@@ -106,6 +110,30 @@ class SzCsCouponWC
       )
     );
     echo '</div>';
+  }
+  // Create points field for the product in product edit page
+  public function wc_product_variation_points_field($loop, $variation_data, $variation)
+  {
+    woocommerce_wp_text_input(array(
+      'id' => 'szcs_product_points_field[' . $loop . ']',
+      'class' => 'short',
+      'label' => __('Points (%)', 'szcs-coupon'),
+      'value' => get_post_meta($variation->ID, 'szcs_product_points_field', true),
+      'wrapper_class' => 'form-row form-row-full',
+      'type' => 'number',
+      'custom_attributes' => array(
+        'step' => 'any',
+        'min' => '0',
+        'max' => '100',
+      )
+    ));
+  }
+
+
+  function wc_product_variation_save_points($variation_id, $i)
+  {
+    $szcs_product_points_field = $_POST['szcs_product_points_field'][$i];
+    if (isset($szcs_product_points_field)) update_post_meta($variation_id, 'szcs_product_points_field', esc_attr($szcs_product_points_field));
   }
 
   public function get_product($the_product = false)
@@ -172,14 +200,23 @@ class SzCsCouponWC
 
   function wc_cart_item_price($price_html, $cart_item)
   {
-    $args = array('price' => $this->wc_product_get_amount_payable($cart_item['product_id']));
+    // $args = array('price' => $this->wc_product_get_amount_payable($cart_item['product_id']));
 
-    if (WC()->cart->display_prices_including_tax()) {
-      $product_price = wc_get_price_including_tax($cart_item['data'], $args);
-    } else {
-      $product_price = wc_get_price_excluding_tax($cart_item['data'], $args);
-    }
-    return wc_price($product_price);
+    // if (WC()->cart->display_prices_including_tax()) {
+    //   $product_price = wc_get_price_including_tax($cart_item['data'], $args);
+    // } else {
+    //   $product_price = wc_get_price_excluding_tax($cart_item['data'], $args);
+    // }
+    // return wc_price($product_price);
+    // $args = array('price' => $this->wc_product_get_amount_payable($cart_item->get_id()));
+
+    // if (WC()->cart->display_prices_including_tax()) {
+    //   $product_price = wc_get_price_including_tax($cart_item['data'], $args);
+    // } else {
+    //   $product_price = wc_get_price_excluding_tax($cart_item['data'], $args);
+    // }
+    // return wc_price($product_price);
+    return $price_html;
   }
 
 
@@ -189,9 +226,14 @@ class SzCsCouponWC
 
     foreach ($cart_object->get_cart() as $hash => $value) {
 
-      $points_amount = $this->wc_product_get_points_amount($value['product_id']);
+      if ($value['data']->get_type() == 'variation') {
+        $id = $value['variation_id'];
+      } else {
+        $id = $value['product_id'];
+      }
+      $points_amount = $this->wc_product_get_points_amount($id);
       $points += $points_amount * $value['quantity'];
-      $value['data']->set_price($this->wc_product_get_amount_payable($value['product_id']));
+      $value['data']->set_price($this->wc_product_get_amount_payable($id));
     }
   }
 
@@ -265,6 +307,17 @@ class SzCsCouponWC
       }
 
       if ($type != 'brand' || $type != 'category') {
+
+        // if ($product->is_type('variable')) {
+        //   // get the variations of the product
+        //   $variations = $product->get_available_variations();
+
+        //   // get the points of first variation in the list and assign to a variable
+
+
+        //   $product_points = get_post_meta($variations[0]['variation_id'], 'szcs_product_points_field', true);
+        // } else {
+        // }
         $product_points = $product->get_meta('szcs_product_points_field');
       }
 
@@ -288,11 +341,11 @@ class SzCsCouponWC
         default:
 
           // if not asked for any specific type
-          if ($product_points >= 0) {
+          if (is_numeric($product_points)) {
 
             // then return product points if set
             return $product_points;
-          } else if ($cat_points != null) {
+          } else if (isset($cat_points) && $cat_points != null) {
 
             // if product points not set then return category points
             return $cat_points;
@@ -344,24 +397,57 @@ class SzCsCouponWC
     return 0;
   }
 
+  function get_product_default_variation($WC_Product)
+  {
+    $default_attributes = $WC_Product->get_default_attributes();
+
+    // ->find_matching_product_variation() needs term slugs of matching
+    // attributes array to be prefixed with 'attribute_'
+    $prefixed_slugs = array_map(function ($pa_name) {
+      return 'attribute_' . $pa_name;
+    }, array_keys($default_attributes));
+
+    $default_attributes = array_combine($prefixed_slugs, $default_attributes);
+
+    $default_variation_id = (new \WC_Product_Data_Store_CPT())->find_matching_product_variation($WC_Product, $default_attributes);
+
+    return wc_get_product($default_variation_id);
+  }
 
   public function wc_product_display_redeemable_points()
   {
-    // get points of the product
-    $points = $this->wc_product_get_points_amount();
 
-    // get points of the product
-    $payable = $this->wc_product_get_amount_payable();
+    $product = $this->get_product();
+
+    if ($product->is_type('variable')) {
+      // get the variations of the product
+      $default_variation = $this->get_product_default_variation($product);
+      if (!$default_variation) {
+        // make first variation as default
+        $default_variation = $product->get_available_variations()[0];
+        $variation_id = $default_variation['variation_id'];
+      } else {
+        $variation_id = $default_variation->get_id();
+      }
+      $points = $this->wc_product_get_points_amount($variation_id);
+      $payable = $this->wc_product_get_amount_payable($variation_id);
+    } else {
+      // get points of the product
+      $points = $this->wc_product_get_points_amount();
+
+      // get points of the product
+      $payable = $this->wc_product_get_amount_payable();
+    }
 
     if ($points) {
       printf(
-        '<div><label class="coupon-text">Points / Currency : </label><span class="coupon-amount"> %s</span></div>',
+        '<div class="szcs_coupon_info"><label class="coupon-text">Coins : </label><span class="icon"><img src="' . plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/img/FreeBucks-coin-2.png' . '"></span><span class="coupon-amount"> %s</span></div>',
         esc_html($points)
       );
 
       // Show the amount to be paid
       printf(
-        '<div><label class="coupon-text">Balance to Pay : </label><span class="amount coupon-amount"> ' . get_woocommerce_currency_symbol() . '%s</span></div>',
+        '<div><label class="coupon-text">Balance to Pay : </label><span class=" coupon-amount"> ' . get_woocommerce_currency_symbol() . '%s</span></div>',
         esc_html($payable)
       );
     }
@@ -369,15 +455,32 @@ class SzCsCouponWC
 
   public function wc_product_loop_display_redeemable_points()
   {
-    $points = $this->wc_product_get_points_amount();
 
-    // get points of the product
-    $payable = $this->wc_product_get_amount_payable();
+    $product = $this->get_product();
+
+    if ($product->is_type('variable')) {
+      // get the variations of the product
+      $default_variation = $this->get_product_default_variation($product);
+      if (!$default_variation) {
+        // make first variation as default
+        $default_variation = $product->get_available_variations()[0];
+        $variation_id = $default_variation['variation_id'];
+      } else {
+        $variation_id = $default_variation->get_id();
+      }
+      $points = $this->wc_product_get_points_amount($variation_id);
+      $payable = $this->wc_product_get_amount_payable($variation_id);
+    } else {
+      $points = $this->wc_product_get_points_amount();
+
+      // get points of the product
+      $payable = $this->wc_product_get_amount_payable();
+    }
 
     if ($points) {
       printf(
-        '<div class="szcs_coupon_product_loop_points"><label class="">%s :</label><span class=""> %s</span></div>',
-        __('Points / Currency', 'szcs-coupon'),
+        '<div class="szcs_coupon_product_loop_points"><label class="">%s :</label><span class="icon"><img src="' . plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/img/FreeBucks-coin-2.png' . '"></span><span class=""> %s</span></div>',
+        __('Coins', 'szcs-coupon'),
         $points
       );
 
