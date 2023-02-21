@@ -200,6 +200,13 @@ class SzCsCouponWC
 
   function wc_cart_item_price($price_html, $cart_item)
   {
+
+    // if ($cart_item->get_type() == 'variation') {
+    //   $id = $$cart_item['variation_id'];
+    // } else {
+    //   $id = $cart_item['product_id'];
+    // }
+
     // $args = array('price' => $this->wc_product_get_amount_payable($cart_item['product_id']));
 
     // if (WC()->cart->display_prices_including_tax()) {
