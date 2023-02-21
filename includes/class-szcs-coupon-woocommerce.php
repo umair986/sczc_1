@@ -88,6 +88,8 @@ class SzCsCouponWC
 
 
     add_action('woocommerce_save_product_variation', array($this, 'wc_product_variation_save_points'), 10, 2);
+
+    add_action('wp_enqueue_scripts', array($this, 'wp_enqueue_scripts'), 20);
   }
 
 
@@ -435,6 +437,7 @@ class SzCsCouponWC
     if ($product->is_type('variable')) {
       // get the variations of the product
       $default_variation = $this->get_product_default_variation($product);
+
       if (!$default_variation) {
         // make first variation as default
         $default_variation = $product->get_available_variations()[0];
@@ -442,8 +445,32 @@ class SzCsCouponWC
       } else {
         $variation_id = $default_variation->get_id();
       }
+
       $points = $this->wc_product_get_points_amount($variation_id);
       $payable = $this->wc_product_get_amount_payable($variation_id);
+
+      $product = $this->get_product(get_the_ID());
+
+      if (!$product->is_type('variable')) return;
+
+      $local_data = array();
+      $variations = $product->get_available_variations();
+
+      foreach ($variations as $variation) {
+        $variation_id = $variation['variation_id'];
+        $local_points = $this->wc_product_get_points_amount($variation_id);
+        $local_payable = $this->wc_product_get_amount_payable($variation_id);
+        $local_data[$variation_id] = array(
+          'points' => $local_points,
+          'payable' => $local_payable,
+        );
+      }
+
+      $coupon_data = array(
+        'product_id' => $product->get_id(),
+        'currency' => get_woocommerce_currency_symbol(),
+        'variations' => $local_data,
+      );
     } else {
       // get points of the product
       $points = $this->wc_product_get_points_amount();
@@ -454,15 +481,24 @@ class SzCsCouponWC
 
     if ($points) {
       printf(
-        '<div class="szcs_coupon_info"><label class="coupon-text">Coins : </label><span class="icon"><img src="' . plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/img/FreeBucks-coin-2.png' . '"></span><span class="coupon-amount"> %s</span></div>',
+        '<div class="szcs_coupon_info" id="szcs-points"><label class="coupon-text">Coins : </label><span class="icon"><img src="%sassets/img/FreeBucks-coin-2.png' . '"></span><span class="coupon-amount"> %s</span></div>',
+        plugin_dir_url(SZCS_COUPON_PLUGIN_FILE),
         esc_html($points)
       );
 
       // Show the amount to be paid
       printf(
-        '<div><label class="coupon-text">Balance to Pay : </label><span class=" coupon-amount"> ' . get_woocommerce_currency_symbol() . '%s</span></div>',
+        '<div id="szcs-payable"><label class="coupon-text">Balance to Pay : </label><span class=" coupon-amount">%s%s</span></div>',
+        get_woocommerce_currency_symbol(),
         esc_html($payable)
       );
+
+      if (isset($local_data) && !empty($local_data)) {
+        printf(
+          "<script type='text/javascript' id='szcs-coupon-single-js-extra'> var SZCS_COUPONS = %s </script>",
+          json_encode($coupon_data)
+        );
+      }
     }
   }
 
@@ -606,7 +642,7 @@ class SzCsCouponWC
   }
 
   // display ponts in category table and brand table
-  function point_column_display($string = '', $column_name, $term_id)
+  function point_column_display($string, $column_name, $term_id)
   {
     if ($column_name == 'szcs_brand_points_field' || $column_name == 'szcs_cat_points_field') {
       $points = get_term_meta($term_id, $column_name, true);
@@ -768,6 +804,12 @@ class SzCsCouponWC
     unset($bulk_actions['delete']); // Remove "Delete" bulk action
     $bulk_actions['delete'] = __('Delete', 'szcs-coupon'); // Add "Delete" bulk action back to the end of the list
     return $bulk_actions;
+  }
+
+  function wp_enqueue_scripts()
+  {
+    if (is_product()) {
+    }
   }
 }
 

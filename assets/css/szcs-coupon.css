@@ -58,3 +58,27 @@
   display: flex;
   flex-direction: column;
 } */
+
+.szcs_coupon_info {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+
+.szcs_coupon_info .icon {
+  width: 20px;
+}
+
+.szcs_coupon_product_loop_points .icon {
+  width: 12px;
+  display: inline-block;
+}
+
+.szcs_coupon_product_loop_points {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+
+}

@@ -48,6 +48,7 @@ class SzCsCouponWallet
 		add_action('szcs_coupon_update_balance', array($this, 'update_balance'), 10, 3);
 	}
 
+
 	/**
 	 * Get data.
 	 */
@@ -74,15 +75,15 @@ class SzCsCouponWallet
 
 		switch ($action) {
 			case 'add':
-				$args['description'] = 'Points balance increased by ' . $amount;
+				$args['description'] = 'Coins balance increased by ' . $amount;
 				$args['credit_points'] = (float) $amount;
 				break;
 			case 'less':
-				$args['description'] = 'Points balance decreased by ' . $amount;
+				$args['description'] = 'Coins balance decreased by ' . $amount;
 				$args['debit_points'] = (float) $amount;
 				break;
 			case 'set':
-				$args['description'] = 'Points balance set to ' . $amount;
+				$args['description'] = 'Coins balance set to ' . $amount;
 				$args['closing_balance'] = (float) $amount;
 				break;
 		}
@@ -106,7 +107,8 @@ class SzCsCouponWallet
 			$args,
 			array(
 				'href' => home_url('/voucher/'),
-				'title' => 'Points'
+				'title' => 'Coins',
+				'icon' => ''
 			)
 		);
 
@@ -117,8 +119,12 @@ class SzCsCouponWallet
 			} else {
 				$output = '<div class="szcs_coupon">';
 			}
-			$output .= '<span class="szcs_coupon_icon">';
-			$output .= '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-wallet2" viewBox="0 0 16 16"><path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499L12.136.326zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484L5.562 3zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/></svg>';
+			$output .= '<span class="szcs_coupon_icon" style="width: 45px;">';
+			if ($args['icon']) {
+				$output .= '<img src="' . $args['icon'] . '" alt="' . $args['title'] . '">';
+			} else {
+				$output .= '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-wallet2" viewBox="0 0 16 16"><path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.432-1.499L12.136.326zM5.562 3H13V1.78a.5.5 0 0 0-.621-.484L5.562 3zM1.5 4a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-13z"/></svg>';
+			}
 			$output .= '</span>';
 			$output .= '<span class="szcs_coupon_points">';
 			$output .= '<span class="szcs_coupon_digits">';
@@ -162,6 +168,7 @@ class SzCsCouponWallet
 					'voucher_no' => $voucher->voucher_no,
 					'status' => null,
 				));
+				wc_add_notice(__('Voucher claimed successfully', 'szcs-coupon'), 'success');
 			} else {
 				wc_add_notice(__($claim_validation[2], 'szcs-coupon'), 'error');
 			}

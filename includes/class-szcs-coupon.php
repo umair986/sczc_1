@@ -146,12 +146,17 @@ final class SzCsCoupon
     wp_register_script('szcs-jquery-datatable', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/szcs-coupon-table.js', ['jquery', 'jquery-datatable'], SZCS_COUPON_PLUGIN_VERSION, true);
     wp_register_script('szcs-coupon-functions', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/szcs-coupon.js', [], SZCS_COUPON_PLUGIN_VERSION, false);
 
+    wp_register_script('szcs-coupon-single', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/szcs-coupon-single.js', [], SZCS_COUPON_PLUGIN_VERSION, true);
+
     wp_register_style('szcs_coupons', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/css/szcs-coupon.css', array(), SZCS_COUPON_PLUGIN_VERSION, 'all');
     wp_register_style('szcs_coupons-login', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/css/szcs-coupon-login.css', array(), SZCS_COUPON_PLUGIN_VERSION, 'all');
 
     wp_enqueue_style('szcs_coupons');
 
     wp_enqueue_script('szcs-coupon-functions');
+
+
+    wp_enqueue_script('szcs-coupon-single');
 
     global $post;
     if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'szcs_coupon_login_form')) {
