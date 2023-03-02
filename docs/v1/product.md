@@ -1,8 +1,8 @@
-# GET v1/product/{id}
+# GET api/v1/product/{id}
 
 ## Description
 
-This API endpoint retrieves a product by its ID. The endpoint is registered under the `v1` namespace and is accessible through the URL `/product/{id}`.
+This API endpoint retrieves a product by its ID. The endpoint is registered under the `api/v1` namespace and is accessible through the URL `/product/{id}`.
 
 ## Authentication
 Authentication is required to access this endpoint. The API user should provide an `x-api-key` header and a `vendor-id` header in the request. The values for these headers should be obtained from the API provider.
