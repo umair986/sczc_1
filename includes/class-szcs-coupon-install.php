@@ -55,6 +55,7 @@ class SzCsCoupon_Install
     if ($wpdb->has_cap('collation')) {
       $collate = $wpdb->get_charset_collate();
     }
+
     $tables = [
       "CREATE TABLE IF NOT EXISTS {$wpdb->base_prefix}szcs_transaction_points (
             trans_point_id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -65,7 +66,7 @@ class SzCsCoupon_Install
             closing_balance float NOT NULL,
             voucher_id bigint(20) NULL,
             voucher_no varchar(255) NULL,
-            order_dateTime datetime NOT NULL DEFAULT current_timestamp(),
+            order_dateTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
             status varchar(50) NULL,
             PRIMARY KEY (trans_point_id)
           ) $collate",
@@ -83,7 +84,7 @@ class SzCsCoupon_Install
             batch_id bigint(20) NULL,
             voucher_no varchar(255) NOT NULL,
             voucher_amount bigint(20) NOT NULL,
-            create_date date NOT NULL DEFAULT current_timestamp(),
+            create_date date NOT NULL DEFAULT CURRENT_DATE,
             expiry_date date NOT NULL,
             usage_limit_per_voucher int(20) NOT NULL DEFAULT 1,
             usage_limit_per_user int(20) NOT NULL DEFAULT 1,
@@ -93,7 +94,7 @@ class SzCsCoupon_Install
       "CREATE TABLE {$wpdb->base_prefix}szcs_voucher_batch (
             batch_id bigint(20) NOT NULL AUTO_INCREMENT,
             vendor_id bigint(20) NULL,
-            create_time timestamp NOT NULL DEFAULT current_timestamp(),
+            create_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (batch_id)
           ) $collate;"
     ];

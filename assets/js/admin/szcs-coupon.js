@@ -329,6 +329,9 @@ function showNotification($, message, type = 'error'){
     class: type +' szcs-coupon-notice',
   }).append($('<p />').html(message)).insertAfter(element);
 
+  if(type === 'error'){ 
+    element[0].scrollIntoView({behavior: "smooth", block: "start", inline: "nearest"});
+  }
 }
 
 function hideNotification($){
@@ -424,4 +427,51 @@ jQuery(function($) {
 
   });
 }
+});
+
+
+jQuery(function($) {
+
+    // copy api key
+    $('#copy_szcs-coupon-api-key').on('click', function() {
+      $('#szcs-coupon-api-key').select();
+      navigator.clipboard.writeText($('#szcs-coupon-api-key').val());
+    });
+
+    $('#szcs-coupon-api-generate').click(function() {
+
+      var formData = new FormData();
+
+      // add custom field to form data
+      formData.append('action', 'szcs-coupon-api-generate');
+      formData.append('nonce', SZCS_VARS.nonce);
+      formData.append('user_id', $(this).data('user-id'));
+
+      // disable the button
+      $('#szcs-coupon-api-generate').addClass('disabled');
+
+      // make a fetch request
+      fetch(`${SZCS_VARS.ajaxUrl}`, {
+          method: 'post',
+          body: formData,
+        })
+        .then(res => {
+          return res.json();
+        })
+        .then(data => {
+          if(data.success){
+            $('#szcs-coupon-api-key').val(data.data.api_key);
+            showNotification($, data.data.message, 'updated');
+          }else{
+            showNotification($, data.data.message, 'error');
+          }
+        })
+        .catch(e => {
+          showNotification($, 'Something went wrong', 'error');
+        }).finally(() => {
+          $('#szcs-coupon-api-generate').removeClass('disabled');
+        });
+
+    });
+
 });

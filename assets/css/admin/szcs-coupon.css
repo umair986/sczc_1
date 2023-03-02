@@ -184,3 +184,13 @@
     transform: rotate(359deg);
   }
 }
+
+.szcs-api-key {
+  display: inline-block;
+  position: relative;
+}
+
+.szcs-api-key button.js_copy-szcs-coupon-api-key {
+  position: absolute;
+  right: 0;
+}

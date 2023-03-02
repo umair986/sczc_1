@@ -62,16 +62,7 @@ class SzCsCouponSettings
       '',
       'szcs-coupon'
     );
-
-    add_settings_section(
-      'szcs_coupon_section_category',
-      __('Category Options', 'szcs-coupon'),
-      '',
-      'szcs-coupon'
-    );
-
     // Register a new field in the "szcs_coupon_section_membership" section, inside the "szcs-coupon-settings" page.
-
 
     add_settings_field(
       'szcs_coupon_member_only', // As of WP 4.6 this value is used only internally.
@@ -87,6 +78,13 @@ class SzCsCouponSettings
       )
     );
 
+    add_settings_section(
+      'szcs_coupon_section_category',
+      __('Category Options', 'szcs-coupon'),
+      '',
+      'szcs-coupon'
+    );
+
     add_settings_field(
       'szcs_coupon_auto_select_parent_category', // As of WP 4.6 this value is used only internally.
       // Use $args' label_for to populate the id inside the callback.
@@ -97,7 +95,28 @@ class SzCsCouponSettings
       array(
         'label'         => 'Auto Select Category',
         'label_for'         => 'szcs-coupon-auto-parent-category',
-        'helper_text'        => 'Auto select parent sategory'
+        'helper_text'        => 'Auto select parent category'
+      )
+    );
+
+    add_settings_section(
+      'szcs_coupon_section_rest_api',
+      __('Rest Api Options', 'szcs-coupon'),
+      '',
+      'szcs-coupon'
+    );
+
+    add_settings_field(
+      'szcs_coupon_section_rest_api_root', // As of WP 4.6 this value is used only internally.
+      // Use $args' label_for to populate the id inside the callback.
+      __('API Root', 'szcs-coupon'),
+      array($this, 'field_input'),
+      'szcs-coupon',
+      'szcs_coupon_section_rest_api',
+      array(
+        'label'         => 'API Root',
+        'label_for'         => 'szcs-coupon-rest-api-root',
+        'prifix_text'        => get_home_url() . '/'
       )
     );
 
@@ -155,6 +174,22 @@ class SzCsCouponSettings
   <?php
   }
 
+  function field_input($args)
+  {
+    // Get the value of the setting we've registered with register_setting()
+    $options = get_option('szcs-coupon_options');
+  ?>
+    <fieldset>
+      <legend class="screen-reader-text">
+        <span><?php echo esc_attr($args['label']); ?></span>
+      </legend>
+      <label for="<?php echo esc_attr($args['label_for']); ?>">
+        <code><?php echo esc_attr($args['prifix_text']); ?></code></label>
+      <input name="szcs-coupon_options[<?php echo esc_attr($args['label_for']); ?>]" type="input" id="<?php echo esc_attr($args['label_for']); ?>" value="<?php echo sanitize_title(str_replace(get_home_url(), "", get_rest_url())); ?>" pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$" title="This field should only contain lowercase letters, digits, and hyphens. Please ensure that the input is formatted correctly.">
+    </fieldset>
+  <?php
+  }
+
   /**
    * Display coupon settings page
    */
@@ -190,6 +225,9 @@ class SzCsCouponSettings
         submit_button('Save Settings');
         ?>
       </form>
+
+
+      <p>Make sure to update permalink after changing Api root from <code>Settings > Permalinks > Save Changes</code></p>
     </div>
   <?php
   }
@@ -219,6 +257,11 @@ class SzCsCouponSettings
         </td>
 
       </tr>
+
+      <?php
+      do_action('szcs_coupon_after_user_profile_fields', $user);
+      ?>
+
     </table>
 
 <?php

@@ -15,7 +15,7 @@ class SzCsCouponExport
    */
   protected static $_instance = null;
 
-  protected static $batch_details_table = null;
+  protected $batch_details_table = null;
 
   /**
    * Main instance

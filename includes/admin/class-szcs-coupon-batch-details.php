@@ -260,12 +260,7 @@ class SzCs_Coupon_Batch_Details extends WP_List_Table
       case 'wallet_points':
         return number_format($item[$column_name] ? $item[$column_name] : 0, 2);
       case 'actions':
-        return '<p><a href="' . add_query_arg(
-          array(
-            'user_id' => $item['ID'],
-          ),
-          admin_url('#')
-        ) . '" class="button" data-batch-id="' . $item['batch_id'] . '" data-target="szcs-export-batch" title="export"  style="width: auto;display: inline-flex;align-items: center;justify-content: center;gap: 5px;"><span class="text">Export</span> <span class="dashicons dashicons-share-alt2"></span></a></p>';
+        return '<p><a href="' . admin_url('#') . '" class="button" data-batch-id="' . $item['batch_id'] . '" data-target="szcs-export-batch" title="export"  style="width: auto;display: inline-flex;align-items: center;justify-content: center;gap: 5px;"><span class="text">Export</span> <span class="dashicons dashicons-share-alt2"></span></a></p>';
         //      case 'cb':
         //      return '<input type="checkbox" />';
       default:
