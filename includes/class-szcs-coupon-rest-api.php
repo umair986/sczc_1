@@ -206,11 +206,21 @@ class SzCsCouponRestApi
   public function api_get_product_by_id($request)
   {
     $id = $request['id'];
-    $product = wc_get_product($id);
+
+    $args = array(
+      'post_type' => 'product',
+      'post_status' => 'publish',
+      'posts_per_page' => 1,
+      'p' => $id,
+    );
+
+    $product = wc_get_products($args);
+
+    // $product = wc_get_product($id);
     $response = array(
       'status_code' => 200,
       'status' => 'success',
-      'product' => empty($product) ? [] : $this->format_product($product),
+      'product' => empty($product) ? [] : $this->format_product($product[0]),
     );
 
     if (!$product) {
@@ -263,6 +273,7 @@ class SzCsCouponRestApi
       'status' => 'success',
       'page' => $args['paged'],
       'product_count' => count($products),
+      'total_products' => wp_count_posts('product')->publish,
       'products' => array_map(array($this, 'format_product'), $products),
     );
 
