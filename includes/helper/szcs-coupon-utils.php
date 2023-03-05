@@ -67,14 +67,14 @@ if (!function_exists('szcs_coupon_can_redeem')) {
 
     // check if voucher is already claimed
     if ($claims_count >= $voucher->usage_limit_per_voucher) {
-      return array('error', 'Error', 'This voucher is already claimed, please try another');
+      return array('error', 'Error', 'This voucher is already used!');
     }
 
     if ($user_id) {
       // check if user has already claimed this voucher
       $claim_by_user_count = count($szcs_coupon_transaction->get_number_of_claims_by_user($voucher->voucher_id, $user_id));
       if ($claim_by_user_count >= $voucher->usage_limit_per_user) {
-        return array('error', 'Error', 'You have already claimed this voucher, please try another');
+        return array('error', 'Error', 'This voucher is already used!');
       }
     }
 

@@ -68,7 +68,7 @@ class SzCsCouponRestApi
         <th><label for="szcs-coupon-user-id"><?php _e('Vendor ID', 'szcs-coupon'); ?></label></th>
         <td>
           <!-- <input type="text" name="szcs-coupon-user-id" id="szcs-coupon-user-id" value="<?php echo $user->ID; ?>" class="regular-text" readonly> -->
-          <span class="" id="szcs_coupon_user_id"><?= $user->ID ?></span>
+          <span class="" id="szcs_coupon_user_id"><?php echo $user->ID; ?></span>
         </td>
       </tr>
 
@@ -183,6 +183,15 @@ class SzCsCouponRestApi
         'permission_callback' => array($this, 'api_authenticate'),
       )
     );
+    register_rest_route(
+      'v1',
+      '/customer/register',
+      array(
+        'methods' => 'POST',
+        'callback' => array($this, 'api_register_user'),
+        'permission_callback' => array($this, 'api_authenticate'),
+      )
+    );
   }
 
   public function api_authenticate($request)
@@ -201,6 +210,179 @@ class SzCsCouponRestApi
       }
     }
     return new WP_Error('unauthorized', __('Sorry, you are not authorized to access this resource.', 'szcs-coupon'), array('status' => 401));
+  }
+
+  public function api_register_user($request)
+  {
+
+    /*
+   Voucher No	
+Required
+Name	
+Required
+Email	
+Required
+Username	
+Required
+Mobile Number	
+Required
+Password	
+Required
+   */
+
+    $voucher_no = "";
+
+    $vendor_id = $request->get_header('vendor-id');
+
+    $body = $request->get_body();
+
+    if (empty($body)) {
+      $response = array(
+        'status_code' => 400,
+        'status' => 'error',
+        'message' => __('Invalid request', 'szcs-coupon')
+      );
+      return new WP_REST_Response($response, 400);
+    }
+
+    $body = json_decode($body);
+
+    $response = array();
+
+    $errors = array();
+
+    global $wpdb, $szcs_coupon_voucher;
+
+    if (empty($body->voucher_no)) {
+      $errors[] = __('Voucher code is required', 'szcs-coupon');
+    } else {
+
+      $voucher_no = $wpdb->escape($body->voucher_no);
+      $voucher = $szcs_coupon_voucher->validate_voucher($voucher_no, '', true);
+      if ($voucher[0] !== 'valid') {
+        $errors[] = __($voucher[2], 'szcs-coupon');
+      } else {
+        $claim_validation = szcs_coupon_can_redeem($voucher[1]);
+        if ($claim_validation[0] !== 'success') {
+          $errors[] = __($claim_validation[2], 'szcs-coupon');
+        } elseif ($voucher[1]->vendor_id != $vendor_id) {
+          $errors[] = __('Oops! Voucher number is invalid. Please check & try again!', 'szcs-coupon');
+        }
+      }
+    }
+
+    if (empty($body->name)) {
+      $errors[] = __('Name is required', 'szcs-coupon');
+    }
+
+    if (empty($body->email)) {
+      $errors[] = __('Email is required', 'szcs-coupon');
+    } elseif (!is_email($body->email)) {
+      $errors[] = __('Email is invalid', 'szcs-coupon');
+    } elseif (email_exists($body->email)) {
+      $errors[] = __('Email already exists', 'szcs-coupon');
+    }
+
+    if (empty($body->username)) {
+      $errors[] = __('Username is required', 'szcs-coupon');
+    } elseif (username_exists(sanitize_user($body->username))) {
+      $errors[] = __('Username already exists', 'szcs-coupon');
+    }
+
+    if (empty($body->mobile)) {
+      $errors[] = __('Mobile is required', 'szcs-coupon');
+    } elseif (!preg_match('/^[1-9]{1}[0-9]{9}$/', $body->mobile)) {
+      $errors[] = __('Mobile is invalid', 'szcs-coupon');
+    }
+
+    if (empty($body->password)) {
+      $errors[] = __('Password is required', 'szcs-coupon');
+    }
+
+    if (empty($errors)) {
+
+      $name = $body->name;
+      $email = $body->email;
+      $username = $body->username;
+      $mobile = $body->mobile;
+      $password = $body->password;
+
+      $user_id = wp_create_user($username, $password, $email);
+
+      if (!is_wp_error($user_id)) {
+        wp_update_user(
+          array(
+            'ID' => $user_id,
+            'display_name' => $name,
+            'first_name' => $name,
+            'role' => 'customer'
+          )
+        );
+
+        update_user_meta($user_id, 'billing_phone', $mobile);
+        update_user_meta($user_id, 'digits_phone', '+91' . $mobile);
+        update_user_meta($user_id, 'digt_countrycode', '+91');
+        update_user_meta($user_id, 'digits_phone_no', $mobile);
+        update_user_meta($user_id, 'szcs-voucher', $voucher_no);
+        update_user_meta($user_id, 'szcs_coupon_vendor_id', $vendor_id);
+
+        $voucher = $voucher[1];
+
+        do_action('szcs_coupon_add_transaction', array(
+          'user_id' => $user_id,
+          'description' => "Voucher $voucher->voucher_id claimed by user $user_id ",
+          'debit_points' => 0,
+          'credit_points' => $voucher->voucher_amount,
+          'voucher_id' => $voucher->voucher_id,
+          'voucher_no' => $voucher->voucher_no,
+          'status' => null,
+        ));
+      } else {
+        $errors[] = __($user_id->get_error_message(), 'szcs-coupon');
+      }
+
+
+
+      // if (!$user_id and email_exists($email) == false) {
+      //   $user_id = wp_create_user($username, $password, $email);
+      //   if (!is_wp_error($user_id)) {
+      //     wp_update_user(
+      //       array(
+      //         'ID' => $user_id,
+      //         'display_name' => $name,
+      //         'first_name' => $name,
+      //         'role' => 'customer'
+      //       )
+      //     );
+      //     update_user_meta($user_id, 'billing_phone', $mobile);
+      //     update_user_meta($user_id, 'szcs_coupon_voucher', $voucher_no);
+      //     $szcs_coupon_voucher->redeem_voucher($voucher_no, $user_id);
+      //   }
+      // }
+    }
+
+    if (!empty($errors)) {
+      $response = array(
+        'status_code' => 400,
+        'status' => 'error',
+        'message' => $errors
+      );
+    } else {
+      $response = array(
+        'status_code' => 200,
+        'status' => 'success',
+        'message' => __('Customer created successfully', 'szcs-coupon'),
+        'user_id' => $user_id,
+      );
+    }
+
+    // $voucher_no = json_decode($body);
+    // $name = $request['name'];
+    // $email = $request['email'];
+    // $username = $request['username'];
+    // $mobile = $request['mobile'];
+    // $password = $request['password'];
+    return new WP_REST_Response($response, $response['status_code']);
   }
 
   public function api_get_product_by_id($request)
@@ -229,7 +411,7 @@ class SzCsCouponRestApi
       $response['message'] = __('Product not found', 'szcs-coupon');
     }
 
-    return $response;
+    return new WP_REST_Response($response, $response['status_code']);;
   }
 
 
@@ -285,7 +467,7 @@ class SzCsCouponRestApi
     }
 
     // return product data
-    wp_send_json($response);
+    return new WP_REST_Response($response, $response['status_code']);
   }
 
   public function format_product($product)

@@ -168,7 +168,7 @@ class SzCsCouponWallet
 					'voucher_no' => $voucher->voucher_no,
 					'status' => null,
 				));
-				wc_add_notice(__('Voucher claimed successfully', 'szcs-coupon'), 'success');
+				wc_add_notice(__('Yay! Your account has been credited with ' . $voucher->voucher_amount . ' of coins!', 'szcs-coupon'), 'success');
 			} else {
 				wc_add_notice(__($claim_validation[2], 'szcs-coupon'), 'error');
 			}
@@ -213,16 +213,16 @@ class SzCsCouponWallet
 		if (function_exists('wc_print_notices')) {
 			$output .=  wc_print_notices(true);
 		}
-		$output .=  '<h2 class="">' . __("Do you have voucher?", "szcs-coupon") . '</h2>';
+		$output .=  '<h2 class="">' . __("Have Freebucks?<br>Add your coins here", "szcs-coupon") . '</h2>';
 		$output .=  '<form method="post" class="woocommerce-form woocommerce-form-login login" action="">';
 		$output .=  '<p class="form-row form-row-wide">';
-		$output .=  '<label for="voucher">' . __("Add Voucher", "szcs-coupon") . '</label>';
+		$output .=  '<label for="voucher">' . __("Add voucher code", "szcs-coupon") . '</label>';
 		$output .=  '<input type="text" class="input-text" name="voucher" id="voucher" value="">';
 		$output .=  '</p>';
 		$output .=  '<p class="form-row">';
 		$output .=  '<input type="hidden" name="action" value="add-voucher">';
 		$output .=  '<!-- <input type="hidden" id="woocommerce-login-nonce" name="woocommerce-login-nonce" value="485bff4379"> -->';
-		$output .=  '<input type="submit" class="button" name="add_voucher" value="' . __("Add Voucher", "szcs-coupon") . '">';
+		$output .=  '<input type="submit" class="button" name="add_voucher" value="' . __("Add", "szcs-coupon") . '">';
 		$output .=  '</p>';
 		$output .=  '</form>';
 		$output .=  '</div>';

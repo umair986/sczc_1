@@ -263,10 +263,10 @@ if (!class_exists('SzCsCouponVoucher')) {
             return array('error', 'Error', 'Voucher is already expired');
 
           default:
-            return array('error', 'Error', 'Voucher is not valid');
+            return array('error', 'Error', 'Oops! Voucher number is invalid. Please check &amp; try again!');
         }
       } else {
-        return array('error', 'Error', 'Voucher Number is not valid');
+        return array('error', 'Error', 'Oops! Voucher number is invalid. Please check &amp; try again!');
       }
     }
 
