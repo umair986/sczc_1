@@ -63,7 +63,7 @@ The product object will contain the following properties:
 The endpoint returns the following HTTP status codes:
 
 - `200`: The request was successful, and the product information is included in the response.
-- `401`: The request was not authenticated. The x-api-key and/or vendor-id headers were missing or invalid.
+- `401`: The request was not authenticated. The `x-api-key` and/or `vendor-id` headers were missing or invalid.
 - `404`: The product with the specified ID was not found.
 
 ## Example Request

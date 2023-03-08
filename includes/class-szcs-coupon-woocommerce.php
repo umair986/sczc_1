@@ -90,7 +90,38 @@ class SzCsCouponWC
     add_action('woocommerce_save_product_variation', array($this, 'wc_product_variation_save_points'), 10, 2);
 
     add_action('wp_enqueue_scripts', array($this, 'wp_enqueue_scripts'), 20);
+    add_filter('woocommerce_account_menu_items', array($this, 'szcs_coupon_ledger_link'), 40);
+
+    add_action('init', array($this, 'szcs_coupon_endpoint'));
+
+
+    add_action('woocommerce_account_coins-ledger_endpoint', array($this, 'szcs_coupon_endpoint_content'));
   }
+
+
+  public function szcs_coupon_ledger_link($menu_links)
+  {
+
+    $menu_links = array_slice($menu_links, 0, 2, true)
+      + array('coins-ledger' => 'Transactions')
+      + array_slice($menu_links, 2, NULL, true);
+
+    return $menu_links;
+  }
+  // register permalink endpoint
+  public function szcs_coupon_endpoint()
+  {
+
+    add_rewrite_endpoint('coins-ledger', EP_PAGES);
+  }
+
+
+  public function szcs_coupon_endpoint_content()
+  {
+
+    echo do_shortcode('[szcs_coupon_transactions_table]');
+  }
+
 
 
 
