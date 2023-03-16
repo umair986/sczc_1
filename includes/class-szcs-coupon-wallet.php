@@ -205,24 +205,31 @@ class SzCsCouponWallet
 	/**
 	 * add balance form [shortcode]
 	 */
-	function topup_form()
+	function topup_form($args)
 	{
+		$args = wp_parse_args($args, [
+			'placeholder-text' => __('Add voucher code', 'szcs-coupon'),
+			'button-text' => __("Add Voucher", 'szcs-coupon')
+		]);
+
 		wp_enqueue_style('szcs_coupons');
 		$output =  '<div class="woocommerce szcs_coupon_topup_form">';
 		do_action('szcs_coupon_add_voucher_notice'); // for backward compatibility
 		if (function_exists('wc_print_notices')) {
 			$output .=  wc_print_notices(true);
 		}
-		$output .=  '<h2 class="">' . __("Have Freebucks?<br>Add your coins here", "szcs-coupon") . '</h2>';
+		$output .=  '<h2 class="title">' . __("Have Freebucks?", "szcs-coupon") . '</h2>';
+		$output .=  '<p class="subtitle">' . __("Add your coins here", "szcs-coupon") . '</p>';
 		$output .=  '<form method="post" class="woocommerce-form woocommerce-form-login login" action="">';
 		$output .=  '<p class="form-row form-row-wide">';
-		$output .=  '<label for="voucher">' . __("Add voucher code", "szcs-coupon") . '</label>';
-		$output .=  '<input type="text" class="input-text" name="voucher" id="voucher" value="">';
+		// 		$output .=  '<label for="voucher">' . __("Add voucher code", "szcs-coupon") . '</label>';
+		$output .=  '<input type="text" class="input-text" name="voucher" id="voucher" value="" placeholder="' . $args['placeholder-text'] . '">';
 		$output .=  '</p>';
+		// 		$output .= '<img src="https://www.myfreebucks.cubosquare.com/wp-content/uploads/2023/03/pngfind.com-straight-arrow-png-5931747.png" />';
 		$output .=  '<p class="form-row">';
-		$output .=  '<input type="hidden" name="action" value="add-voucher">';
+		$output .=  '<input type="hidden" name="action" value="add-voucher" >';
 		$output .=  '<!-- <input type="hidden" id="woocommerce-login-nonce" name="woocommerce-login-nonce" value="485bff4379"> -->';
-		$output .=  '<input type="submit" class="button" name="add_voucher" value="' . __("Add", "szcs-coupon") . '">';
+		$output .=  '<input type="submit" class="button" name="add_voucher" value="' . $args['button-text'] . '">';
 		$output .=  '</p>';
 		$output .=  '</form>';
 		$output .=  '</div>';

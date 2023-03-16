@@ -192,6 +192,17 @@ class SzCsCouponRestApi
         'permission_callback' => array($this, 'api_authenticate'),
       )
     );
+
+    // get customers
+    register_rest_route(
+      'v1',
+      '/customers',
+      array(
+        'methods' => 'GET',
+        'callback' => array($this, 'api_get_customers'),
+        'permission_callback' => array($this, 'api_authenticate'),
+      )
+    );
   }
 
   public function api_authenticate($request)
@@ -212,29 +223,108 @@ class SzCsCouponRestApi
     return new WP_Error('unauthorized', __('Sorry, you are not authorized to access this resource.', 'szcs-coupon'), array('status' => 401));
   }
 
+  public function api_get_customers($request)
+  {
+    // $args = array(
+    //   'post_type' => 'product',
+    //   'post_status' => 'publish',
+    //   'posts_per_page' => 10,
+    //   'orderby' => 'title',
+    //   'order' => 'ASC',
+    //   'paged' => 1,
+    // );
+
+    // if (isset($request['category'])) {
+    //   $args['category'] = $request['category'];
+    // }
+
+    // if (isset($request['limit'])) {
+    //   $args['posts_per_page'] = $request['limit'];
+    // }
+
+    // if (isset($request['page'])) {
+    //   $args['paged'] = $request['page'];
+    // }
+
+    // if (isset($request['orderby'])) {
+    //   $args['orderby'] = $request['orderby'];
+    // }
+
+    // if (isset($request['order'])) {
+    //   $args['order'] = $request['order'];
+    // }
+
+    // $products = wc_get_products($args);
+
+
+
+    // $response = array(
+    //   'status_code' => 200,
+    //   'status' => 'success',
+    //   'page' => $args['paged'],
+    //   'product_count' => count($products),
+    //   'total_products' => wp_count_posts('product')->publish,
+    //   'products' => array_map(array($this, 'format_product'), $products),
+    // );
+
+    // // check if product exists
+    // if (empty($products)) {
+    //   $response['status_code'] = 404;
+    //   $response['status'] = 'error';
+    //   $response['message'] = __('No products found', 'szcs-coupon');
+    // }
+
+    $vendor_id = $request->get_header('vendor-id');
+
+    $args = array(
+      'role' => 'customer',
+      'orderby' => 'registered',
+      'order' => 'DESC',
+      'number' => 10,
+      'paged' => 1,
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_coupon_vendor_id',
+          'value' => $vendor_id,
+          'compare' => '=',
+        ),
+      ),
+    );
+
+    if (isset($request['limit'])) {
+      $args['number'] = $request['limit'];
+    }
+
+    if (isset($request['page'])) {
+      $args['paged'] = $request['page'];
+    }
+
+    $users = get_users($args);
+
+    $response = array(
+      'status_code' => 200,
+      'status' => 'success',
+      'page' => $args['paged'],
+      'customer_count' => count($users),
+      'total_customers' => count_users()['total_users'],
+      'customers' => array_map(array($this, 'format_customer'), $users),
+      'customers_raw' => $users,
+    );
+
+    // return product data
+    return new WP_REST_Response($response, $response['status_code']);
+  }
+
   public function api_register_user($request)
   {
-
-    /*
-   Voucher No	
-Required
-Name	
-Required
-Email	
-Required
-Username	
-Required
-Mobile Number	
-Required
-Password	
-Required
-   */
 
     $voucher_no = "";
 
     $vendor_id = $request->get_header('vendor-id');
 
     $body = $request->get_body();
+
+
 
     if (empty($body)) {
       $response = array(
@@ -246,6 +336,16 @@ Required
     }
 
     $body = json_decode($body);
+
+    // if missing any required field
+    if (!isset($body->voucher_no) || !isset($body->name) || !isset($body->email) || !isset($body->username) || !isset($body->mobile) || !isset($body->password)) {
+      $response = array(
+        'status_code' => 400,
+        'status' => 'error',
+        'message' => __('Invalid request', 'szcs-coupon')
+      );
+      return new WP_REST_Response($response, 400);
+    }
 
     $response = array();
 
@@ -320,9 +420,9 @@ Required
         );
 
         update_user_meta($user_id, 'billing_phone', $mobile);
-        update_user_meta($user_id, 'digits_phone', '+91' . $mobile);
-        update_user_meta($user_id, 'digt_countrycode', '+91');
-        update_user_meta($user_id, 'digits_phone_no', $mobile);
+        // update_user_meta($user_id, 'digits_phone', '+91' . $mobile);
+        // update_user_meta($user_id, 'digt_countrycode', '+91');
+        // update_user_meta($user_id, 'digits_phone_no', $mobile);
         update_user_meta($user_id, 'szcs-voucher', $voucher_no);
         update_user_meta($user_id, 'szcs_coupon_vendor_id', $vendor_id);
 
@@ -330,7 +430,7 @@ Required
 
         do_action('szcs_coupon_add_transaction', array(
           'user_id' => $user_id,
-          'description' => "Voucher $voucher->voucher_id claimed by user $user_id ",
+          'description' => "Vaucher Credited",
           'debit_points' => 0,
           'credit_points' => $voucher->voucher_amount,
           'voucher_id' => $voucher->voucher_id,
@@ -340,25 +440,6 @@ Required
       } else {
         $errors[] = __($user_id->get_error_message(), 'szcs-coupon');
       }
-
-
-
-      // if (!$user_id and email_exists($email) == false) {
-      //   $user_id = wp_create_user($username, $password, $email);
-      //   if (!is_wp_error($user_id)) {
-      //     wp_update_user(
-      //       array(
-      //         'ID' => $user_id,
-      //         'display_name' => $name,
-      //         'first_name' => $name,
-      //         'role' => 'customer'
-      //       )
-      //     );
-      //     update_user_meta($user_id, 'billing_phone', $mobile);
-      //     update_user_meta($user_id, 'szcs_coupon_voucher', $voucher_no);
-      //     $szcs_coupon_voucher->redeem_voucher($voucher_no, $user_id);
-      //   }
-      // }
     }
 
     if (!empty($errors)) {
@@ -376,12 +457,6 @@ Required
       );
     }
 
-    // $voucher_no = json_decode($body);
-    // $name = $request['name'];
-    // $email = $request['email'];
-    // $username = $request['username'];
-    // $mobile = $request['mobile'];
-    // $password = $request['password'];
     return new WP_REST_Response($response, $response['status_code']);
   }
 
@@ -564,6 +639,46 @@ Required
     } else {
       return new WP_Error('my_custom_endpoint_error', 'Product not found', array('status' => 404));
     }
+  }
+
+  public function format_customer($customer)
+  {
+    $customer_data = array(
+      'id' => $customer->get_id(),
+      'username' => $customer->get_username(),
+      'email' => $customer->get_email(),
+      'first_name' => $customer->get_first_name(),
+      'last_name' => $customer->get_last_name(),
+      'display_name' => $customer->get_display_name(),
+      'role' => $customer->get_role(),
+      'avatar' => get_avatar_url($customer->get_id()),
+      'points' => get_user_meta($customer->get_id(), 'szcs_coupon_points', true),
+      'total_spent' => $customer->get_total_spent(),
+      'total_orders' => $customer->get_order_count(),
+      'total_products' => $customer->get_total_products(),
+      'total_reviews' => $customer->get_total_reviews(),
+      'total_downloads' => $customer->get_total_downloads(),
+      'total_refunds' => $customer->get_total_refunds(),
+      'total_refunded' => $customer->get_total_refunded(),
+      'total_tax' => $customer->get_total_tax(),
+      'total_shipping' => $customer->get_total_shipping(),
+      'total_discount' => $customer->get_total_discount(),
+      'total_discount_tax' => $customer->get_total_discount_tax(),
+      'total_cart_tax' => $customer->get_total_cart_tax(),
+      'total_fees' => $customer->get_total_fees(),
+      'total_coupons' => $customer->get_total_coupons(),
+      'total_sales' => $customer->get_total_sales(),
+      'total_credits' => $customer->get_total_credits(),
+      'total_credits_used' => $customer->get_total_credits_used(),
+      'total_credits_earned' => $customer->get_total_credits_earned(),
+      'total_credits_refunded' => $customer->get_total_credits_refunded(),
+      'total_credits_refunded_tax' => $customer->get_total_credits_refunded_tax(),
+      'total_credits_tax' => $customer->get_total_credits_tax(),
+      'total_credits_shipping' => $customer->get_total_credits_shipping(),
+      'total_credits_discount' => $customer->get_total_credits_discount(),
+    );
+
+    return $customer_data;
   }
 }
 

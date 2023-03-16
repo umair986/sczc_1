@@ -110,7 +110,7 @@ class SzCsCouponForms
         if ($claim_validation[0] === 'success') {
           do_action('szcs_coupon_add_transaction', array(
             'user_id' => $user_id,
-            'description' => "Voucher $voucher->voucher_id claimed by user $user_id ",
+            'description' => "Voucher Credited",
             'debit_points' => 0,
             'credit_points' => $voucher->voucher_amount,
             'voucher_id' => $voucher->voucher_id,
@@ -271,7 +271,7 @@ class SzCsCouponForms
 
         do_action('szcs_coupon_add_transaction', array(
           'user_id' => $user_id,
-          'description' => "Voucher $voucher->voucher_id claimed by user $user_id",
+          'description' => "Voucher Credited",
           'debit_points' => 0,
           'credit_points' => $voucher->voucher_amount,
           'voucher_id' => $voucher->voucher_id,
