@@ -53,12 +53,11 @@ client-id: {client_id}
 
 Body:
 {
-    "voucher_no": "TES030036C8C",
-    "password": "mypassword",
-    "username": "newuser16",
-    "mobile" : "9312334567",
-    "email": "newuser16@gmail.com",
-    "name": "New Customer 16"
+    "voucher_no": "ABC1234567",
+    "username": "johndoe",
+    "mobile" : "9123456789",
+    "email": "johndoe@example.com",
+    "name": "John Doe",
 }
 
 ```

@@ -517,7 +517,9 @@ class SzCsCouponRestApi
 
     global $szcs_coupon_wc, $szcs_coupon_wallet;
 
-    $points = isset($params['coins']) ? $params['coins'] : $szcs_coupon_wc->wc_product_get_points_amount($product);
+    $product_points = $szcs_coupon_wc->wc_product_get_points_amount($product);
+
+    $points = isset($params['coins']) && $params['coins'] <= $product_points ? $params['coins'] : $product_points;
 
     $points_balance = (int) $szcs_coupon_wallet->get_balance($user_id);
 
@@ -567,7 +569,7 @@ class SzCsCouponRestApi
     if ($points > $points_balance) {
       $order->update_status('failed', 'Insufficient Coins');
       $order->save();
-      $response['status_code'] = 404;
+      $response['status_code'] = 402;
       $response['status'] = 'error';
       $response['message'] = 'Insufficient coins';
       return new WP_REST_Response($response, 404);
@@ -585,7 +587,7 @@ class SzCsCouponRestApi
 
     update_post_meta($order_id, '_stock_reduction_done', true);
 
-    $response['order_placed'] = $order_id;
+    $response['order_id'] = $order_id;
 
     do_action('szcs_coupon_add_transaction', array(
       'description' => "Redeemed for order #$order_id",
@@ -638,7 +640,6 @@ class SzCsCouponRestApi
       'customer_count' => count($users),
       // 'total_customers' => count_users()['total_users'],
       'customers' => array_map(array($this, 'format_customer'), $users),
-      'customers_raw' => $users,
     );
 
     // return product data
@@ -668,7 +669,7 @@ class SzCsCouponRestApi
     $body = json_decode($body);
 
     // if missing any required field
-    if (!isset($body->voucher_no) || !isset($body->name) || !isset($body->email) || !isset($body->username) || !isset($body->mobile) || !isset($body->password)) {
+    if (!isset($body->voucher_no) || !isset($body->name) || !isset($body->email) || !isset($body->username) || !isset($body->mobile)) {
       $response = array(
         'status_code' => 400,
         'status' => 'error',
@@ -725,17 +726,13 @@ class SzCsCouponRestApi
       $errors[] = __('Mobile is invalid', 'szcs-coupon');
     }
 
-    if (empty($body->password)) {
-      $errors[] = __('Password is required', 'szcs-coupon');
-    }
-
     if (empty($errors)) {
 
       $name = $body->name;
       $email = $body->email;
       $username = $body->username;
       $mobile = $body->mobile;
-      $password = $body->password;
+      $password = wp_generate_password(12, false);
 
       $user_id = wp_create_user($username, $password, $email);
 
@@ -750,9 +747,6 @@ class SzCsCouponRestApi
         );
 
         update_user_meta($user_id, 'billing_phone', $mobile);
-        // update_user_meta($user_id, 'digits_phone', '+91' . $mobile);
-        // update_user_meta($user_id, 'digt_countrycode', '+91');
-        // update_user_meta($user_id, 'digits_phone_no', $mobile);
         update_user_meta($user_id, 'szcs-voucher', $voucher_no);
         update_user_meta($user_id, 'szcs_coupon_vendor_id', $vendor_id);
 
@@ -982,7 +976,6 @@ class SzCsCouponRestApi
       'display_name' => $customer->get_display_name(),
       'avatar' => get_avatar_url($customer->get_id()),
       'points' => get_user_meta($customer->get_id(), 'szcs_coupon_points', true),
-      'total_spent' => $customer->get_total_spent(),
       'total_orders' => $customer->get_order_count(),
     );
 

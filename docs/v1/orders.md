@@ -7,8 +7,8 @@ This API endpoint retrieves a product by its ID. The endpoint is registered unde
 ## Authentication
 Authentication is required to access this endpoint. The API user should provide an `x-api-key` header and a `client-id` header in the request. The values for these headers should be obtained from the API provider.
 
-## Parameters
-The endpoint accepts a single parameter:
+## Query Parameters
+The following query parameters are available:
 
 - `order_id`: the ID of the order to retrieve. This should be an integer. If not provided, all orders will be returned.
 - `status`: the status of the order to retrieve. Options are: `pending`, `processing`, `on-hold`, `completed`, `cancelled`, `refunded`, `failed`. If not provided, all orders will be returned.
