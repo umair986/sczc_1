@@ -65,7 +65,7 @@ class SzCsCouponRestApi
       <!-- field for user id -->
 
       <tr>
-        <th><label for="szcs-coupon-user-id"><?php _e('Vendor ID', 'szcs-coupon'); ?></label></th>
+        <th><label for="szcs-coupon-user-id"><?php _e('Client ID', 'szcs-coupon'); ?></label></th>
         <td>
           <!-- <input type="text" name="szcs-coupon-user-id" id="szcs-coupon-user-id" value="<?php echo $user->ID; ?>" class="regular-text" readonly> -->
           <span class="" id="szcs_coupon_user_id"><?php echo $user->ID; ?></span>
@@ -203,12 +203,46 @@ class SzCsCouponRestApi
         'permission_callback' => array($this, 'api_authenticate'),
       )
     );
+
+    // place orders
+    register_rest_route(
+      'v1',
+      '/order_create',
+      array(
+        'methods' => 'POST',
+        'callback' => array($this, 'api_place_order'),
+        'permission_callback' => array($this, 'api_authenticate'),
+      )
+    );
+
+    // get orders
+    register_rest_route(
+      'v1',
+      '/orders',
+      array(
+        'methods' => 'GET',
+        'callback' => array($this, 'api_get_orders'),
+        'permission_callback' => array($this, 'api_authenticate'),
+      )
+    );
+
+    // redeem coupon
+    register_rest_route(
+      'v1',
+      '/redeem_voucher',
+      array(
+        'methods' => 'POST',
+        'callback' => array($this, 'api_redeem_coupon'),
+        'permission_callback' => array($this, 'api_authenticate'),
+      )
+    );
   }
+
 
   public function api_authenticate($request)
   {
     $api_key = $request->get_header('x-api-key');
-    $vendor_id = $request->get_header('vendor-id');
+    $vendor_id = $request->get_header('client-id');
 
     // Check if the authentication header is present
     if (!empty($api_key) || !empty($vendor_id)) {
@@ -223,58 +257,349 @@ class SzCsCouponRestApi
     return new WP_Error('unauthorized', __('Sorry, you are not authorized to access this resource.', 'szcs-coupon'), array('status' => 401));
   }
 
+  public function api_redeem_coupon($request)
+  {
+
+    $params = $request->get_params();
+    $vendor_id = $request->get_header('client-id');
+
+    $errors = '';
+
+    if (!isset($params['voucher_no']) || !isset($params['customer_id'])) {
+      return new WP_REST_Response(
+        array(
+          'status_code' => 400,
+          'status' => 'error',
+          'message' => __('Invalid request', 'szcs-coupon'),
+        ),
+        400
+      );
+    }
+
+    $response = array(
+      'status_code' => 200,
+      'status' => 'success',
+      'message' => __('Coupon redeemed successfully', 'szcs-coupon'),
+    );
+
+    $voucher_no = $params['voucher_no'];
+    $customer_id = $params['customer_id'];
+
+    // check if customer exists under this vendor
+    $user_args = array(
+      'role' => 'customer',
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_coupon_vendor_id',
+          'value' => $vendor_id,
+          'compare' => '='
+        )
+      ),
+      'search' => $customer_id,
+      'search_columns' => array('ID')
+    );
+
+    $users = get_users($user_args);
+
+    if (empty($users)) {
+      $response['status_code'] = 400;
+      $response['status'] = 'error';
+      $response['message'] = __('Customer not found', 'szcs-coupon');
+      return new WP_REST_Response($response, 400);
+    }
+
+    global  $szcs_coupon_voucher, $szcs_coupon_wallet;
+
+
+    if (empty($voucher_no)) {
+      return new WP_REST_Response(
+        array(
+          'status_code' => 400,
+          'status' => 'error',
+          'message' => __('Voucher number is required', 'szcs-coupon'),
+        ),
+        400
+      );
+    } else {
+      $voucher = $szcs_coupon_voucher->validate_voucher($voucher_no, '', true);
+      if ($voucher[0] !== 'valid') {
+        $errors = __($voucher[2], 'szcs-coupon');
+      } else {
+        $claim_validation = szcs_coupon_can_redeem($voucher[1]);
+        if ($claim_validation[0] !== 'success') {
+          $errors = __($claim_validation[2], 'szcs-coupon');
+        } elseif ($voucher[1]->vendor_id != $vendor_id) {
+          $errors = __('Oops! Voucher number is invalid. Please check & try again!', 'szcs-coupon');
+        }
+      }
+    }
+
+    if (!empty($errors)) {
+      $response['status_code'] = 400;
+      $response['status'] = 'error';
+      $response['message'] = $errors;
+      return new WP_REST_Response($response, 400);
+    }
+
+    $voucher = $voucher[1];
+
+    do_action('szcs_coupon_add_transaction', array(
+      'user_id' => $customer_id,
+      'description' => "Vaucher Credited",
+      'debit_points' => 0,
+      'credit_points' => $voucher->voucher_amount,
+      'voucher_id' => $voucher->voucher_id,
+      'voucher_no' => $voucher->voucher_no,
+      'status' => null,
+    ));
+
+    $updated_balance = (int) $szcs_coupon_wallet->get_balance($customer_id);
+
+    $response['message'] = __('Yay! Your account has been credited with ' . $voucher->voucher_amount . ' of coins!', 'szcs-coupon');
+
+    $response['data'] = array(
+      'balance' => $updated_balance,
+    );
+
+    return new WP_REST_Response($response, 200);
+  }
+
+  public function api_get_orders($request)
+  {
+
+    $params = $request->get_params();
+    $vendor_id = $request->get_header('client-id');
+
+    $response = array(
+      'status_code' => 200,
+      'status' => 'success',
+    );
+
+
+    $args = array(
+      'post_type' => 'shop_order',
+      'post_status' => array_keys(wc_get_order_statuses()),
+      'posts_per_page' => 10,
+      'paged' => 1,
+      'meta_key' => 'client_id',
+      'meta_value' => $vendor_id,
+      'meta_compare' => '=',
+      'return' => 'ids'
+    );
+
+    if (isset($params['order_id'])) {
+      $args['post__in'] = array($params['order_id']);
+    }
+
+    if (isset($params['status'])) {
+      $args['status'] = $params['status'];
+    }
+
+    if (isset($request['limit'])) {
+      $args['posts_per_page'] = $request['limit'];
+    }
+
+    if (isset($request['page'])) {
+      $args['paged'] = $request['page'];
+    }
+
+    if (isset($request['orderby'])) {
+      $args['orderby'] = $request['orderby'];
+    }
+
+    if (isset($request['sortby'])) {
+      $args['order'] = $request['sortby'];
+    }
+
+    $query = new WC_Order_Query($args);
+
+    $order_data = array_map(array($this, 'format_orders'), $query->get_orders());
+
+    $response['page'] = $args['paged'];
+    $response['order_count'] = count($order_data);
+    $response['orders'] = $order_data;
+    // }
+
+    return new WP_REST_Response($response,  200);
+  }
+
+  public function api_place_order($request)
+  {
+    $params = $request->get_params();
+    $vendor_id = $request->get_header('client-id');
+
+    if (!isset($params['customer_id']) || !isset($params['product_id']) || !isset($params['quantity']) || !isset($params['address']) || !isset($params['city']) || !isset($params['state']) || !isset($params['postal-code']) || !isset($params['country']) || !isset($params['phone'])) {
+      return new WP_Error('invalid_request', __('Invalid request', 'szcs-coupon'), array('status' => 400));
+    }
+
+    $user_id = $params['customer_id'];
+    $product_id = $params['product_id'];
+    $quantity = $params['quantity'];
+
+
+
+    $order_note = isset($params['order_note']) ? $params['order_note'] : '';
+
+    $response = array(
+      'status_code' => 200,
+      'status' => 'success',
+    );
+
+
+    // chck if customer with provided id exist under vernder
+    $user_args = array(
+      'role' => 'customer',
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_coupon_vendor_id',
+          'value' => $vendor_id,
+          'compare' => '='
+        )
+      ),
+      'search' => $user_id,
+      'search_columns' => array('ID')
+    );
+
+    $user_query = get_users($user_args);
+
+    // check for valid user
+    if (!$user_query) {
+      $response['status_code'] = 404;
+      $response['status'] = 'error';
+      $response['message'] = 'Customer not found';
+      return new WP_REST_Response($response, 404);
+    }
+
+    // check for valid product
+    $product = wc_get_product($product_id);
+    if (!$product) {
+      $response['status_code'] = 404;
+      $response['status'] = 'error';
+      $response['message'] = 'Product not found';
+      return new WP_REST_Response($response, 404);
+    }
+
+    // check for valid quantity
+    if ($quantity < 1) {
+      $response['status_code'] = 404;
+      $response['status'] = 'error';
+      $response['message'] = 'Invalid quantity';
+      return new WP_REST_Response($response, 404);
+    }
+
+    // check if it is a variable product
+    if ($product->is_type('variable')) {
+
+      // if yes get the variations
+      $variations = $product->get_available_variations();
+
+      // check if the product is out of stock
+      if (empty($variations)) {
+        $response['status_code'] = 404;
+        $response['status'] = 'error';
+        $response['message'] = 'Product out of stock';
+        return new WP_REST_Response($response, 404);
+      }
+      $variation_id = $variations[0]['variation_id'];
+
+      // replace the product with the variation
+      $product = wc_get_product($variation_id);
+    }
+
+    $stock = $product->get_stock_quantity();
+
+    if ($stock < $quantity) {
+      $response['status_code'] = 404;
+      $response['status'] = 'error';
+      $response['message'] = 'Product out of stock';
+      return new WP_REST_Response($response, 404);
+    }
+
+    global $szcs_coupon_wc, $szcs_coupon_wallet;
+
+    $points = isset($params['coins']) ? $params['coins'] : $szcs_coupon_wc->wc_product_get_points_amount($product);
+
+    $points_balance = (int) $szcs_coupon_wallet->get_balance($user_id);
+
+    $product_price = $product->get_price();
+
+    $order = wc_create_order();
+    $order->set_customer_id($user_id);
+
+    $order->add_product($product, $quantity, array(
+      'subtotal' => ($product_price * $quantity) - $points,
+      'total' => ($product_price * $quantity) - $points,
+    ));
+    $address = $params['address'];
+    $city = $params['city'];
+    $state = $params['state'];
+    $postcode = $params['postal-code'];
+    $country = $params['country'];
+    $phone = $params['phone'];
+    $email = isset($params['email']) ? $params['email'] : $user_query[0]->user_email;
+    $name = isset($params['name']) ? $params['name'] : $user_query[0]->display_name;
+
+    $order->set_billing_address_1($address);
+    $order->set_billing_city($city);
+    $order->set_billing_country($country);
+    $order->set_billing_email($email);
+    $order->set_billing_first_name($name);
+    $order->set_billing_phone($phone);
+    $order->set_billing_postcode($postcode);
+    $order->set_billing_state($state);
+
+    $order->set_shipping_address_1($address);
+    $order->set_shipping_city($city);
+    $order->set_shipping_country($country);
+    $order->set_shipping_first_name($name);
+    $order->set_shipping_phone($phone);
+    $order->set_shipping_postcode($postcode);
+    $order->set_shipping_state($state);
+
+
+
+    $order->set_customer_note($order_note);
+    $order->calculate_totals();
+
+    $order->update_meta_data('points', $points);
+    $order->update_meta_data('client_id', $vendor_id);
+
+    if ($points > $points_balance) {
+      $order->update_status('failed', 'Insufficient Coins');
+      $order->save();
+      $response['status_code'] = 404;
+      $response['status'] = 'error';
+      $response['message'] = 'Insufficient coins';
+      return new WP_REST_Response($response, 404);
+    }
+
+    $order->update_status('processing');
+
+    $order->update_meta_data('point_status', 'redeemed');
+
+    $order_id = $order->get_id();
+
+    $order->save();
+
+    // wc_update_product_stock($product, $quantity, 'decrease');
+
+    update_post_meta($order_id, '_stock_reduction_done', true);
+
+    $response['order_placed'] = $order_id;
+
+    do_action('szcs_coupon_add_transaction', array(
+      'description' => "Redeemed for order #$order_id",
+      'debit_points' => $points,
+      'user_id' => $user_id,
+    ));
+
+    return new WP_REST_Response($response, 200);
+  }
+
   public function api_get_customers($request)
   {
-    // $args = array(
-    //   'post_type' => 'product',
-    //   'post_status' => 'publish',
-    //   'posts_per_page' => 10,
-    //   'orderby' => 'title',
-    //   'order' => 'ASC',
-    //   'paged' => 1,
-    // );
 
-    // if (isset($request['category'])) {
-    //   $args['category'] = $request['category'];
-    // }
-
-    // if (isset($request['limit'])) {
-    //   $args['posts_per_page'] = $request['limit'];
-    // }
-
-    // if (isset($request['page'])) {
-    //   $args['paged'] = $request['page'];
-    // }
-
-    // if (isset($request['orderby'])) {
-    //   $args['orderby'] = $request['orderby'];
-    // }
-
-    // if (isset($request['order'])) {
-    //   $args['order'] = $request['order'];
-    // }
-
-    // $products = wc_get_products($args);
-
-
-
-    // $response = array(
-    //   'status_code' => 200,
-    //   'status' => 'success',
-    //   'page' => $args['paged'],
-    //   'product_count' => count($products),
-    //   'total_products' => wp_count_posts('product')->publish,
-    //   'products' => array_map(array($this, 'format_product'), $products),
-    // );
-
-    // // check if product exists
-    // if (empty($products)) {
-    //   $response['status_code'] = 404;
-    //   $response['status'] = 'error';
-    //   $response['message'] = __('No products found', 'szcs-coupon');
-    // }
-
-    $vendor_id = $request->get_header('vendor-id');
+    $vendor_id = $request->get_header('client-id');
 
     $args = array(
       'role' => 'customer',
@@ -295,6 +620,11 @@ class SzCsCouponRestApi
       $args['number'] = $request['limit'];
     }
 
+    if (isset($request['customer'])) { // $resquest['user']  can be user_login or email 
+      $args['search'] = $request['customer'];
+      $args['search_columns'] = array('user_login', 'user_email');
+    }
+
     if (isset($request['page'])) {
       $args['paged'] = $request['page'];
     }
@@ -306,7 +636,7 @@ class SzCsCouponRestApi
       'status' => 'success',
       'page' => $args['paged'],
       'customer_count' => count($users),
-      'total_customers' => count_users()['total_users'],
+      // 'total_customers' => count_users()['total_users'],
       'customers' => array_map(array($this, 'format_customer'), $users),
       'customers_raw' => $users,
     );
@@ -320,7 +650,7 @@ class SzCsCouponRestApi
 
     $voucher_no = "";
 
-    $vendor_id = $request->get_header('vendor-id');
+    $vendor_id = $request->get_header('client-id');
 
     $body = $request->get_body();
 
@@ -641,44 +971,92 @@ class SzCsCouponRestApi
     }
   }
 
-  public function format_customer($customer)
+  public function format_customer($user)
   {
+    $customer = new WC_Customer($user->ID);
+
     $customer_data = array(
       'id' => $customer->get_id(),
       'username' => $customer->get_username(),
       'email' => $customer->get_email(),
-      'first_name' => $customer->get_first_name(),
-      'last_name' => $customer->get_last_name(),
       'display_name' => $customer->get_display_name(),
-      'role' => $customer->get_role(),
       'avatar' => get_avatar_url($customer->get_id()),
       'points' => get_user_meta($customer->get_id(), 'szcs_coupon_points', true),
       'total_spent' => $customer->get_total_spent(),
       'total_orders' => $customer->get_order_count(),
-      'total_products' => $customer->get_total_products(),
-      'total_reviews' => $customer->get_total_reviews(),
-      'total_downloads' => $customer->get_total_downloads(),
-      'total_refunds' => $customer->get_total_refunds(),
-      'total_refunded' => $customer->get_total_refunded(),
-      'total_tax' => $customer->get_total_tax(),
-      'total_shipping' => $customer->get_total_shipping(),
-      'total_discount' => $customer->get_total_discount(),
-      'total_discount_tax' => $customer->get_total_discount_tax(),
-      'total_cart_tax' => $customer->get_total_cart_tax(),
-      'total_fees' => $customer->get_total_fees(),
-      'total_coupons' => $customer->get_total_coupons(),
-      'total_sales' => $customer->get_total_sales(),
-      'total_credits' => $customer->get_total_credits(),
-      'total_credits_used' => $customer->get_total_credits_used(),
-      'total_credits_earned' => $customer->get_total_credits_earned(),
-      'total_credits_refunded' => $customer->get_total_credits_refunded(),
-      'total_credits_refunded_tax' => $customer->get_total_credits_refunded_tax(),
-      'total_credits_tax' => $customer->get_total_credits_tax(),
-      'total_credits_shipping' => $customer->get_total_credits_shipping(),
-      'total_credits_discount' => $customer->get_total_credits_discount(),
     );
 
     return $customer_data;
+  }
+
+  public function format_orders($order_id)
+  {
+
+    $order = wc_get_order($order_id);
+
+    $order_data = array(
+      'id' => $order->get_id(),
+      'custumer_id' => $order->get_customer_id(),
+      'status' => $order->get_status(),
+      'order_time' => $order->get_date_created()->date('Y-m-d H:i:s'),
+      'items' => array(),
+      'shipping_address' => array(
+        'name' => $order->get_shipping_first_name(),
+        'address' => $order->get_shipping_address_1(),
+        'city' => $order->get_shipping_city(),
+        'state' => $order->get_shipping_state(),
+        'postcode' => $order->get_shipping_postcode(),
+        'country' => $order->get_shipping_country(),
+      ),
+      'billing_address' => array(
+        'name' => $order->get_billing_first_name(),
+        'address' => $order->get_billing_address_1(),
+        'phone' => $order->get_billing_phone(),
+        'email' => $order->get_billing_email(),
+        'city' => $order->get_billing_city(),
+        'state' => $order->get_billing_state(),
+        'postcode' => $order->get_billing_postcode(),
+        'country' => $order->get_billing_country(),
+      ),
+      'coins' => get_post_meta($order->get_id(), 'points', true),
+      'coins_status' => get_post_meta($order->get_id(), 'point_status', true),
+      'total' => $order->get_total(),
+    );
+
+    foreach ($order->get_items() as $item) {
+
+      $attributes = array();
+
+      if ($item->get_meta('pa_color')) {
+        $color = $item->get_meta('pa_color');
+        $attributes['color'] = $color;
+      }
+
+      if ($item->get_meta('pa_size')) {
+        $size = $item->get_meta('pa_size');
+        $attributes['size'] = $size;
+      }
+
+      $item_data = array(
+        'id' => $item->get_id(),
+        'name' => $item->get_name(),
+        'product_id' => $item->get_product_id(),
+        'quantity' => $item->get_quantity(),
+        'subtotal' => $item->get_subtotal(),
+        'total' => $item->get_total(),
+      );
+
+
+      // Mark the stock reduction as done for this order
+      if ($attributes) {
+        $item_data['attributes'] = $attributes;
+      }
+
+      $order_data['items'][] = $item_data;
+    }
+
+
+    return $order_data;
   }
 }
 

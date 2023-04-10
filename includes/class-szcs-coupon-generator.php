@@ -159,11 +159,11 @@ class SzCsCouponGenerator
 
             <tr>
               <th scope="row">
-                <label for="vendor">Vendor</label>
+                <label for="vendor">Client</label>
               </th>
               <td>
                 <select name="vendor" id="vendor">
-                  <option value="">Select vendor</option>
+                  <option value="">Select client</option>
                   <?php foreach ($get_vendors as $vendor) : ?>
                     <option value="<?php echo $vendor->ID; ?>"><?php echo $vendor->display_name; ?></option>
                   <?php endforeach; ?>

@@ -5,7 +5,7 @@
 This API endpoint retrieves a product by its ID. The endpoint is registered under the `api/v1` namespace and is accessible through the URL `/product/{id}`.
 
 ## Authentication
-Authentication is required to access this endpoint. The API user should provide an `x-api-key` header and a `vendor-id` header in the request. The values for these headers should be obtained from the API provider.
+Authentication is required to access this endpoint. The API user should provide an `x-api-key` header and a `client-id` header in the request. The values for these headers should be obtained from the API provider.
 
 ## Parameters
 The endpoint accepts a single parameter:
@@ -63,7 +63,7 @@ The product object will contain the following properties:
 The endpoint returns the following HTTP status codes:
 
 - `200`: The request was successful, and the product information is included in the response.
-- `401`: The request was not authenticated. The `x-api-key` and/or `vendor-id` headers were missing or invalid.
+- `401`: The request was not authenticated. The `x-api-key` and/or `client-id` headers were missing or invalid.
 - `404`: The product with the specified ID was not found.
 
 ## Example Request
@@ -73,7 +73,7 @@ The following is an example request to the endpoint:
 GET /v1/product/123 HTTP/1.1
 Host: myfreebucks.com
 x-api-key: {api_key}
-vendor-id: {vendor_id}
+client-id: {client_id}
 ```
 
 ## Example Response
