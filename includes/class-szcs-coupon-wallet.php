@@ -161,7 +161,7 @@ class SzCsCouponWallet
 			if ($claim_validation[0] === 'success') {
 				do_action('szcs_coupon_add_transaction', array(
 					'user_id' => $id,
-					'description' => "Voucher $voucher->voucher_id claimed by user $id",
+					'description' => "Vaucher Credited",
 					'debit_points' => 0,
 					'credit_points' => $voucher->voucher_amount,
 					'voucher_id' => $voucher->voucher_id,

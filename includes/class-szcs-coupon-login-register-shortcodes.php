@@ -45,7 +45,7 @@ class SzCsCouponForms
     add_action('init', array($this, 'post_reset'));
     add_shortcode('szcs_coupon_login_form', array($this, 'login_shortcode'));
 
-    //! need to check if digits is active
+    //? need to check if digits is active
     add_action('digits_custom_validate', array($this, 'digits_custom_validate'));
     add_filter('digits_registration_errors', array($this, 'digits_registration_errors'));
     add_action('woocommerce_created_customer', array($this, 'redeem_voucher'), 10, 2);
@@ -123,7 +123,7 @@ class SzCsCouponForms
   }
 
 
-  // ! None of the below functions are used in the plugin, but are kept for future use;
+  // ? None of the below functions are used in the plugin, but are kept for future use;
 
   public function validate_pass_key()
   {
