@@ -432,11 +432,11 @@ class SzCsCouponWC
 
     if (!empty($product)) {
       // get custom field, percentage to be redeemed
-      $points = $this->wc_product_get_points_amount($the_product);
+      $points = (int) $this->wc_product_get_points_amount($the_product);
 
 
       // get price of the product
-      $price = $product->get_price();
+      $price = (int) $product->get_price();
 
       return $price - $points;
     }

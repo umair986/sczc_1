@@ -1,5 +1,7 @@
 <?php
 
+use ElementorPro\Modules\Popup\DisplaySettings\Triggers;
+
 /**
  * Users balance file
  *
@@ -47,8 +49,28 @@ class SzCsCouponOption
 
     $options = get_option('szcs-coupon_options');
 
+
     if (isset($options['szcs-coupon-member-only']) && $options['szcs-coupon-member-only'] == 1) {
-      if (!is_user_logged_in() && !isset($_GET['login']) || (isset($_GET['login']) && $_GET['login'] != 'true')) {
+
+      $exclude_pages = isset($options['szcs-coupon-member-exclude']) ? explode("\n", $options['szcs-coupon-member-exclude']) : array();
+
+      $skip_login = false;
+
+      $searchString = trim($wp->request, '/');
+
+      if ($searchString == '') {
+        $searchString = 'home';
+      }
+
+      foreach ($exclude_pages as $element) {
+
+        // Check if the element starts with the search string
+        if (strpos($element, $searchString) === 0) {
+          // Do something with the matching element
+          $skip_login = true;
+        }
+      }
+      if ((!is_user_logged_in() && !isset($_GET['login']) || (isset($_GET['login']) && $_GET['login'] != 'true')) && !$skip_login) {
         // redirect to same url with login=true
         wp_redirect(home_url(add_query_arg(array('login' => 'true'), $wp->request)));
         exit;

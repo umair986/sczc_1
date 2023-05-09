@@ -108,7 +108,7 @@ class SzCsCoupon_Install
     if (empty($role)) {
       add_role(
         'vendor',
-        __('Vendor', 'szcs-coupon'),
+        __('Client', 'szcs-coupon'),
         array(
           'read' => true, // true allows this capability
           'view_admin_dashboard' => true,

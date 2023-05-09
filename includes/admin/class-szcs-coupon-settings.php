@@ -78,6 +78,20 @@ class SzCsCouponSettings
       )
     );
 
+    add_settings_field(
+      'szcs_coupon_member_exclude', // As of WP 4.6 this value is used only internally.
+      // Use $args' label_for to populate the id inside the callback.
+      __('Exclude Pages', 'szcs-coupon'),
+      array($this, 'field_textarea'),
+      'szcs-coupon',
+      'szcs_coupon_section_membership',
+      array(
+        'label'         => 'Exclude Pages',
+        'label_for'         => 'szcs-coupon-member-exclude',
+        'helper_text'        => 'Enter page links to exclude from member only one per line'
+      )
+    );
+
     add_settings_section(
       'szcs_coupon_section_category',
       __('Category Options', 'szcs-coupon'),
@@ -171,6 +185,32 @@ class SzCsCouponSettings
         <input name="szcs-coupon_options[<?php echo esc_attr($args['label_for']); ?>]" type="checkbox" id="<?php echo esc_attr($args['label_for']); ?>" value="1" <?php echo isset($options[$args['label_for']]) ? (checked($options[$args['label_for']], '1', false)) : (''); ?>>
         <?php echo esc_attr($args['helper_text']); ?></label>
     </fieldset>
+  <?php
+  }
+
+  function field_textarea($args)
+  {
+    // Get the value of the setting we've registered with register_setting()
+    $options = get_option('szcs-coupon_options');
+  ?>
+    <!-- <fieldset>
+      <legend class="screen-reader-text">
+        <span><?php echo esc_attr($args['label']); ?></span>
+      </legend>
+      <label for="<?php echo esc_attr($args['label_for']); ?>">
+        <input name="szcs-coupon_options[<?php echo esc_attr($args['label_for']); ?>]" type="checkbox" id="<?php echo esc_attr($args['label_for']); ?>" value="1" <?php echo isset($options[$args['label_for']]) ? (checked($options[$args['label_for']], '1', false)) : (''); ?>>
+        <?php echo esc_attr($args['helper_text']); ?></label>
+    </fieldset> -->
+
+    <fieldset>
+      <legend class="screen-reader-text">
+        <span><?php echo esc_attr($args['label']); ?></span>
+      </legend>
+      <textarea name="szcs-coupon_options[<?php echo esc_attr($args['label_for']); ?>]" type="textarea" id="<?php echo esc_attr($args['label_for']); ?>" rows="5" cols="50"><?php echo isset($options[$args['label_for']]) ? (esc_attr($options[$args['label_for']])) : (''); ?></textarea>
+      <label for="<?php echo esc_attr($args['label_for']); ?>">
+        <?php echo esc_attr($args['helper_text']); ?></label>
+    </fieldset>
+
   <?php
   }
 
