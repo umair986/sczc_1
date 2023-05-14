@@ -128,7 +128,7 @@ class SzCsCouponWallet
 			$output .= '</span>';
 			$output .= '<span class="szcs_coupon_points">';
 			$output .= '<span class="szcs_coupon_digits">';
-			$output .= number_format($this->get_balance(), 2);
+			$output .= number_format($this->get_balance());
 			$output .= '</span>';
 			$output .= '<span class="szcs_coupon_text">';
 			$output .= $args['title'];

@@ -415,7 +415,7 @@ class SzCsCouponWC
       if ($point_percent) {
 
         // calculate amount of the price and return
-        return ($point_percent / 100) * $product->get_price();
+        return (int) (($point_percent / 100) * $product->get_price());
       }
     }
     return 0;
@@ -436,7 +436,7 @@ class SzCsCouponWC
 
 
       // get price of the product
-      $price = (int) $product->get_price();
+      $price = $product->get_price();
 
       return $price - $points;
     }

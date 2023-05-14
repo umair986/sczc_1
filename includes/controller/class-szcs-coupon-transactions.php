@@ -108,18 +108,18 @@ if (!class_exists('SzCsCouponTransactoin')) {
 
         if (isset($args['closing_balance'])) { // directly want to set closing balance
 
-          $user_args['wallet_points'] = $args['closing_balance']; //new balance
+          $user_args['wallet_points'] = (int) $args['closing_balance']; //new balance
 
           $diff = $args['closing_balance'] - $user_data->wallet_points; // get difference
           if ($diff >= 0) { //set diffrence either debit or credit
-            $args['credit_points'] = $diff;
+            $args['credit_points'] = (int) $diff;
           } else {
-            $args['debit_points'] = abs($diff);
+            $args['debit_points'] = (int) abs($diff);
           }
         } else if ($args['debit_points'] > 0) { // want to debit points
-          $user_args['wallet_points'] = $user_data->wallet_points - $args['debit_points']; //degrese balance by amount
+          $user_args['wallet_points'] = (int) $user_data->wallet_points - $args['debit_points']; //degrese balance by amount
         } else {
-          $user_args['wallet_points'] = $user_data->wallet_points + $args['credit_points']; //increase balance by amount
+          $user_args['wallet_points'] = (int) $user_data->wallet_points + $args['credit_points']; //increase balance by amount
         }
 
         // update user table

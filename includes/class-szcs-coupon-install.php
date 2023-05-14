@@ -61,9 +61,9 @@ class SzCsCoupon_Install
             trans_point_id bigint(20) NOT NULL AUTO_INCREMENT,
             user_id bigint(20) NOT NULL,
             description text NOT NULL,
-            debit_points float NOT NULL DEFAULT 0,
-            credit_points float NOT NULL DEFAULT 0,
-            closing_balance float NOT NULL,
+            debit_points int NOT NULL DEFAULT 0,
+            credit_points int NOT NULL DEFAULT 0,
+            closing_balance int NOT NULL,
             voucher_id bigint(20) NULL,
             voucher_no varchar(255) NULL,
             order_dateTime timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -73,7 +73,7 @@ class SzCsCoupon_Install
       "CREATE TABLE {$wpdb->base_prefix}szcs_user_points (
             user_point_id bigint(20) NOT NULL AUTO_INCREMENT,
             user_id bigint(20) NOT NULL,
-            wallet_points float NOT NULL,
+            wallet_points int NOT NULL,
             status varchar(255) NOT NULL DEFAULT 'active',
             PRIMARY KEY (user_point_id)
           ) $collate",
