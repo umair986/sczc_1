@@ -79,11 +79,17 @@ class SzCsCouponUsers
 ?>
     <div class="wrap">
       <h1 class="wp-heading-inline"><?php echo esc_html(get_admin_page_title()); ?></h1>
-      <?php $this->balance_details_table->views(); ?>
-      <form id="coupon-users" method="post">
+      <form id="coupon-users" method="get" action="">
+        <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
+
+        <?php if (isset($_REQUEST['role'])) : ?>
+          <input type="hidden" name="role" value="<?php echo $_REQUEST['role'] ?>" />
+        <?php endif; ?>
+
         <?php $this->balance_details_table->search_box(__('Search', 'szcs-coupon'), 'search_id'); ?>
-        <?php $this->balance_details_table->display(); ?>
       </form>
+      <?php $this->balance_details_table->views(); ?>
+      <?php $this->balance_details_table->display(); ?>
     </div>
 <?php
   }

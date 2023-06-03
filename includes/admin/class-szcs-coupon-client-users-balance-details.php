@@ -13,43 +13,69 @@ if (!class_exists('WP_List_Table')) {
 /**
  * Coupon transaction details wp table class.
  */
-class SzCs_Coupon_Balance_Details extends WP_List_Table
+class SzCs_Coupon_Client_User_Balance_Details extends WP_List_Table
 {
 
+
+  protected $vendor = null;
+
+  protected $users = null;
 
   /**
    * Get data.
    */
 
+  public function __construct(WP_User $vendor)
+  {
+    parent::__construct([
+      'singular' => __('User', 'szcs-coupon'),
+      'plural' => __('Users', 'szcs-coupon'),
+      'ajax' => false
+    ]);
+
+    $this->vendor = $vendor;
+  }
+
+
   private function get_data()
   {
+
+    if ($this->users) return $this->users;
+
     global $wpdb;
     $users_table = $wpdb->prefix . 'users';
     $points_table = $wpdb->prefix . 'szcs_user_points';
-    $users_query = "SELECT * FROM $users_table LEFT JOIN $points_table ON $users_table" . ".ID = $points_table" . ".user_id";
 
+    $user_args = array(
+      'role__in' => array('subscriber', 'customer'),
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_coupon_vendor_id',
+          'value' => $this->vendor->ID,
+          'compare' => '='
+        )
+      )
+    );
 
+    $users = get_users($user_args);
+
+    $users_ids = array_map(function ($user) {
+      return $user->ID;
+    }, $users);
+
+    $users_ids = implode(',', $users_ids);
+
+    $users_query = "SELECT * FROM $users_table LEFT JOIN $points_table ON $users_table" . ".ID = $points_table" . ".user_id WHERE ($users_table.ID IN ($users_ids))";
 
     if (isset($_REQUEST['s'])) {
       $search = $_REQUEST['s'];
-      $users_query .= " WHERE ($users_table.display_name LIKE '%$search%' OR $users_table.user_email LIKE '%$search%' OR $users_table.user_login LIKE '%$search%')";
+      $users_query .= " AND ($users_table.display_name LIKE '%$search%' OR $users_table.user_email LIKE '%$search%' OR $users_table.user_login LIKE '%$search%')";
     }
-
-    if (isset($_REQUEST['role'])) {
-
-      if (isset($_REQUEST['s'])) {
-        $users_query .= " AND";
-      } else {
-        $users_query .= " WHERE";
-      }
-
-      $role = $_REQUEST['role'];
-      $users_query .= " ($users_table.ID IN (SELECT user_id FROM $wpdb->usermeta WHERE meta_key = 'wp_capabilities' AND meta_value LIKE '%$role%'))";
-    }
-
-
 
     $results = $wpdb->get_results($users_query, ARRAY_A);
+
+    $this->users = $results;
+
     return $results;
   }
 
@@ -135,52 +161,33 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
    *
    * @return array An array of HTML links, one for each view.
    */
-  protected function get_views()
+  protected function get_viewsSKIP()
   {
-    global $role;
-
-    $wp_roles = wp_roles();
 
     $url           = 'admin.php?page=szcs-coupon-users';
-    $users_of_blog = count_users();
 
-    $total_users = $users_of_blog['total_users'];
-    $avail_roles = &$users_of_blog['avail_roles'];
-    unset($users_of_blog);
+    $users_args = array(
+      'role__in' => array('subscriber', 'customer'),
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_coupon_vendor_id',
+          'value' => $this->vendor->ID,
+          'compare' => '='
+        )
+      )
+    );
+
+
+    $total_users = count(get_users($users_args));
+
 
     $current_link            = (!empty($_REQUEST['role']) ? wp_unslash($_REQUEST['role']) : 'all');
     $current_link_attributes = ('all' === $current_link) ? ' class="current" aria-current="page"' : '';
 
     $role_links = array();
     /* translators: Total user */
-    $role_links['all'] = "<a href='$url'$current_link_attributes>" . sprintf(_nx('All <span class="count">(%s)</span>', 'All <span class="count">(%s)</span>', $total_users, 'users', 'szcs-coupon'), number_format_i18n($total_users)) . '</a>';
-    foreach ($wp_roles->get_names() as $this_role => $name) {
-      if (!isset($avail_roles[$this_role])) {
-        continue;
-      }
+    $role_links['all'] = "<a href='$url'$current_link_attributes>" . sprintf(_nx('Total <span class="count">(%s)</span>', 'Total <span class="count">(%s)</span>', $total_users, 'users', 'szcs-coupon'), number_format_i18n($total_users)) . '</a>';
 
-      $current_link_attributes = '';
-      $current_link_attributes = ($current_link === $this_role ? ' class="current" aria-current="page"' : '');
-
-      $name = translate_user_role($name);
-      /* translators: User role name with count */
-      $name                     = sprintf(__('%1$s <span class="count">(%2$s)</span>', 'szcs-coupon'), $name, number_format_i18n($avail_roles[$this_role]));
-      $role_links[$this_role] = "<a href='" . esc_url(add_query_arg('role', $this_role, $url)) . "'$current_link_attributes>$name</a>";
-    }
-
-    if (!empty($avail_roles['none'])) {
-
-      $current_link_attributes = '';
-
-      if ('none' === $role) {
-        $current_link_attributes = ' class="current" aria-current="page"';
-      }
-
-      $name = __('No role', 'szcs-coupon');
-      /* translators: User role name with count */
-      $name               = sprintf(__('%1$s <span class="count">(%2$s)</span>', 'szcs-coupon'), $name, number_format_i18n($avail_roles['none']));
-      $role_links['none'] = "<a href='" . esc_url(add_query_arg('role', 'none', $url)) . "'$current_link_attributes>$name</a>";
-    }
 
     return $role_links;
   }
@@ -272,8 +279,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
             'user_id' => $item['ID'],
           ),
           admin_url('user-edit.php')
-        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px"></a> 
-        <a class="button dashicons dashicons-visibility"  style="width: 35px; display: none;" href="' . add_query_arg(
+        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px"></a> <a class="button dashicons dashicons-visibility"  style="display: none; width: 35px" href="' . add_query_arg(
           array(
             'page'    => 'szcs-coupon-transactions',
             'user_id' => $item['ID'],

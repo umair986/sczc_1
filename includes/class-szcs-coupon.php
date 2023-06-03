@@ -87,6 +87,8 @@ final class SzCsCoupon
     include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-options.php';
     include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-login-register-shortcodes.php';
     include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-rest-api.php';
+    include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-client.php';
+
     if ($this->is_request('admin')) {
       include_once SZCS_COUPON_ABSPATH . 'includes/class-szcs-coupon-admin.php';
       include_once SZCS_COUPON_ABSPATH . 'includes/admin/class-szcs-coupon-users.php';

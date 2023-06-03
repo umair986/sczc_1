@@ -279,9 +279,25 @@ class SzCsCouponSettings
     echo '<h3 class="heading">Point Balance Management</h3>';
     global $szcs_coupon_wallet;
 
+    $vendor_id = get_user_meta($user->ID, 'szcs_coupon_vendor_id', true);
+    if ($vendor_id) {
+      $vendor = get_user_by('id', $vendor_id);
+      $vendor_name = $vendor->display_name;
+    } else {
+      $vendor_name = '';
+    }
   ?>
 
     <table class="form-table szcs_coupon_user_setting_table">
+      <?php if ($vendor_name) { ?>
+        <tr>
+          <th><label for="szcs_coupon_user_vendor">Client</label></th>
+
+          <td>
+            <span class="" id="szcs_coupon_user_vendor"><?php echo $vendor_name; ?></span>
+          </td>
+        </tr>
+      <?php } ?>
       <tr>
         <th><label for="szcs_coupon_user_balance">Current Balance</label></th>
 

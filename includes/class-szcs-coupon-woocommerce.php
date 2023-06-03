@@ -405,6 +405,140 @@ class SzCsCouponWC
     return 0;
   }
 
+  public function wc_product_get_vendor_points_percent($the_product, $vendor_id, $type = "")
+  {
+    // check if vendor is valid
+    if (!is_numeric($vendor_id)) {
+      return 0;
+    }
+
+    $vendor = get_user_by('id', $vendor_id);
+
+    if (empty($vendor) || $vendor->roles[0] != 'vendor') {
+      return 0;
+    }
+
+    // Get product
+    $product = $this->get_product($the_product);
+
+    // if product found
+    if (!empty($product)) {
+
+      if ($product->get_type() == 'variation') {
+        $main_product = wc_get_product($product->get_parent_id());
+      } else {
+        $main_product = $product;
+      }
+
+      // when type is either brand or empty get brand's pionts percentage
+      if ($type != 'category' || $type != 'product') {
+
+        // get brand ids
+        $brand_id =  wp_get_post_terms($main_product->get_id(), 'product_brand', array('fields' => 'ids'));
+
+        // if brand ids found
+        if (!empty($brand_id)) {
+
+          // get the points of first brand in the list and assign to a variable
+          $brand_points = get_term_meta($brand_id[0], 'szcs_brand_points_field-v-' . $vendor_id, true);
+        }
+      }
+
+      // when type is either brand or empty get category's pionts percentage
+      if ($type != 'brand' || $type != 'product') {
+
+        // get categories ids
+        $category_ids = $main_product->get_category_ids();
+
+        // if categories id found
+        if (!empty($category_ids)) {
+
+          // set category points to null for comparision
+          $cat_points = null;
+          $depth = 0;
+          foreach ($category_ids as $cat_id) {
+
+            // loop through all the categories and get points
+            $current_cat_points = get_term_meta($cat_id, 'szcs_cat_points_field-v-' . $vendor_id, true);
+
+
+            $cat = get_term($cat_id);
+            /*
+              If current category points is numeric
+              or is child category
+  
+              */
+            if (is_numeric($current_cat_points)) {
+
+              // to select the deepest category
+              $current_depth = 0;
+              while ($cat->parent != '0') {
+                $cat = get_term($cat->parent);
+                $current_depth++;
+              }
+
+              // if current category is deeper than the previous one
+              if ($current_depth > $depth || $cat_points == null) {
+                $depth = $current_depth;
+                $cat_points = $current_cat_points;
+              }
+            }
+          }
+        }
+      }
+
+      if ($type != 'brand' || $type != 'category') {
+
+        // if ($product->is_type('variable')) {
+        //   // get the variations of the product
+        //   $variations = $product->get_available_variations();
+
+        //   // get the points of first variation in the list and assign to a variable
+
+
+        //   $product_points = get_post_meta($variations[0]['variation_id'], 'szcs_product_points_field', true);
+        // } else {
+        // }
+        $product_points = $product->get_meta('szcs_product_points_field-v-' . $vendor_id);
+      }
+
+
+      switch ($type) {
+        case 'brand':
+
+          // if asked for brand's points just return it or zero
+          return isset($brand_points) ? $brand_points : 0;
+
+        case 'category':
+
+          // if asked for category's points just return it or zero
+          return $cat_points != null ? $cat_points : 0;
+
+        case 'product':
+
+          // if asked for producat's points just return or zero
+          return isset($product_points) ? $product_points : 0;
+
+        default:
+
+          // if not asked for any specific type
+          if (is_numeric($product_points)) {
+
+            // then return product points if set
+            return $product_points;
+          } else if (isset($cat_points) && $cat_points != null) {
+
+            // if product points not set then return category points
+            return $cat_points;
+          } else {
+            // if product and category points are not set then return brand points, or 0 if brand points also not set
+            return isset($brand_points) && !empty($brand_points) ? $brand_points : $this->wc_product_get_points_percent($the_product, $type);
+          }
+      }
+    }
+    return 0;
+  }
+
   public function wc_product_get_points_amount($the_product = false, $type = '')
   {
     $product = $this->get_product($the_product);

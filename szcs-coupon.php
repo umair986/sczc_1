@@ -6,7 +6,7 @@
 /*
 Plugin Name: Coupon
 Description: A plugin for managing points system.
-Version: 1.2.0
+Version: 1.3.0
 Requires at least: 5.0
 Tested up to: 6.1
 Requires PHP: 5.2
