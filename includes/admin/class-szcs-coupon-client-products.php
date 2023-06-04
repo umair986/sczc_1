@@ -80,47 +80,9 @@ class SzCs_Coupon_Client_Products extends WP_List_Table
       }
 
       $data['points'] = $szcs_coupon_wc->wc_product_get_vendor_points_percent($data['id'], $this->vendor->ID);
+      $data['edit_link'] = get_edit_post_link($product->get_id());
       $products[] = $data;
     }
-
-    // foreach ($all_products-> as $product_id) {
-    //   $product = wc_get_product($product_id);
-    //   // $product_vendor_id = get_post_meta($product_id, 'szcs_coupon_vendor_id', true);
-    //   // if ($product_vendor_id == $this->vendor->ID) {
-    //   $products[] = $product->get_data();
-    //   // }
-    // }
-
-    // $users_table = $wpdb->prefix . 'users';
-    // $points_table = $wpdb->prefix . 'szcs_user_points';
-
-    // $user_args = array(
-    //   'role__in' => array('subscriber', 'customer'),
-    //   'meta_query' => array(
-    //     array(
-    //       'key' => 'szcs_coupon_vendor_id',
-    //       'value' => $this->vendor->ID,
-    //       'compare' => '='
-    //     )
-    //   )
-    // );
-
-    // $users = get_users($user_args);
-
-    // $users_ids = array_map(function ($user) {
-    //   return $user->ID;
-    // }, $users);
-
-    // $users_ids = implode(',', $users_ids);
-
-    // $users_query = "SELECT * FROM $users_table LEFT JOIN $points_table ON $users_table" . ".ID = $points_table" . ".user_id WHERE ($users_table.ID IN ($users_ids))";
-
-    if (isset($_REQUEST['s'])) {
-      $search = $_REQUEST['s'];
-      // $users_query .= " AND ($users_table.display_name LIKE '%$search%' OR $users_table.user_email LIKE '%$search%' OR $users_table.user_login LIKE '%$search%')";
-    }
-
-    // $results = $wpdb->get_results($users_query, ARRAY_A);
 
     $this->products = $products;
     return $products;
@@ -166,7 +128,7 @@ class SzCs_Coupon_Client_Products extends WP_List_Table
     $hidden = $this->get_hidden_columns();
     $sortable = $this->get_sortable_columns();
 
-    $this->_column_headers = array($columns, $hidden, $sortable);
+    $this->_column_headers = array($columns, $hidden, $sortable, 'name');
 
     $data = $this->get_data();
     $total_items = $this->total_items;
@@ -313,7 +275,7 @@ class SzCs_Coupon_Client_Products extends WP_List_Table
   {
     switch ($column_name) {
       case 'id':
-      case 'name':
+        return $item[$column_name];
       case 'points':
 
         // update_term_meta(787, 'szcs_brand_points_field-v-' . $this->vendor->ID, 90);
@@ -322,14 +284,16 @@ class SzCs_Coupon_Client_Products extends WP_List_Table
         // delete_term_meta(164, 'szcs_cat_points_field-v-' . $this->vendor->ID);
         // update_post_meta(54189, 'szcs_product_points_field-v-' . $this->vendor->ID, 70);
         // delete_post_meta(54189, 'szcs_product_points_field-v-' . $this->vendor->ID);
-        return $item[$column_name];
+        return '<span class="points" id="szcs-product-' . $item['id'] . '-point">' . $item[$column_name] . '</span>';
+      case 'name':;
+        return '<a href="' . $item['edit_link'] . '"><strong>' . $item[$column_name] . '</strong></a>';
       case 'price':
         return wc_price($item[$column_name]);
       case 'modify':
 
         $points = get_post_meta($item['id'], 'szcs_product_points_field-v-' . $this->vendor->ID, true);
         // add an input field to modify points for tmaxlength="3"
-        return sprintf('<input type="number" name="points[%s]" value="%s" min="0" max="100" />', $item['id'], $points);
+        return sprintf('<input type="number" class="product-points" name="product-points[%s]" value="%s" min="0" max="100" />', $item['id'], $points);
 
       case 'query':
 

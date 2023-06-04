@@ -18,9 +18,6 @@ body {
 .szcs-coupon-auth-page ::-moz-placeholder {
   color: transparent;
 }
-.szcs-coupon-auth-page :-ms-input-placeholder {
-  color: transparent;
-}
 .szcs-coupon-auth-page ::placeholder {
   color: transparent;
 }
@@ -143,16 +140,10 @@ body {
 .szcs-coupon-auth-page .content .form-aria .forms form .input-field input:invalid:not(:-moz-placeholder-shown):not(:focus) {
   background-color: rgb(255, 203, 203);
 }
-.szcs-coupon-auth-page .content .form-aria .forms form .input-field input:invalid:not(:-ms-input-placeholder):not(:focus) {
-  background-color: rgb(255, 203, 203);
-}
 .szcs-coupon-auth-page .content .form-aria .forms form .input-field input:invalid:not(:placeholder-shown):not(:focus) {
   background-color: rgb(255, 203, 203);
 }
 .szcs-coupon-auth-page .content .form-aria .forms form .input-field input:invalid:not(:-moz-placeholder-shown) ~ .err {
-  height: 16px;
-}
-.szcs-coupon-auth-page .content .form-aria .forms form .input-field input:invalid:not(:-ms-input-placeholder) ~ .err {
   height: 16px;
 }
 .szcs-coupon-auth-page .content .form-aria .forms form .input-field input:invalid:not(:placeholder-shown) ~ .err {
@@ -168,12 +159,6 @@ body {
   transition: 0.3s;
 }
 .szcs-coupon-auth-page .content .form-aria .forms form .input-field input:not(:-moz-placeholder-shown) + label {
-  color: var(--szcs-coupon-theme-color-dark);
-  opacity: 1;
-  transform: translateY(-180%);
-  font-size: 0.8rem;
-}
-.szcs-coupon-auth-page .content .form-aria .forms form .input-field input:not(:-ms-input-placeholder) + label {
   color: var(--szcs-coupon-theme-color-dark);
   opacity: 1;
   transform: translateY(-180%);

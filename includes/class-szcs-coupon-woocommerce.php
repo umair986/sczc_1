@@ -440,7 +440,7 @@ class SzCsCouponWC
         if (!empty($brand_id)) {
 
           // get the points of first brand in the list and assign to a variable
-          $brand_points = get_term_meta($brand_id[0], 'szcs_brand_points_field-v-' . $vendor_id, true);
+          $brand_points = get_term_meta($brand_id[0], 'szcs_product_brand_points_field-v-' . $vendor_id, true);
         }
       }
 
@@ -459,7 +459,7 @@ class SzCsCouponWC
           foreach ($category_ids as $cat_id) {
 
             // loop through all the categories and get points
-            $current_cat_points = get_term_meta($cat_id, 'szcs_cat_points_field-v-' . $vendor_id, true);
+            $current_cat_points = get_term_meta($cat_id, 'szcs_product_cat_points_field-v-' . $vendor_id, true);
 
 
             $cat = get_term($cat_id);
@@ -537,6 +537,79 @@ class SzCsCouponWC
       }
     }
     return 0;
+  }
+
+  public function wc_product_set_vendor_points_percent($product_id, $vendor_id, $points)
+  {
+    if (!is_numeric($vendor_id)) {
+      return false;
+    }
+
+    if (empty($points)) {
+      return delete_post_meta($product_id, 'szcs_product_points_field-v-' . $vendor_id);
+    }
+
+    if (!is_numeric($points) || $points < 0 || $points > 100) {
+      return false;
+    }
+
+    return update_post_meta($product_id, 'szcs_product_points_field-v-' . $vendor_id, $points);
+  }
+
+  public function wc_product_cat_get_vendor_points_percent($term_id, $vendor)
+  {
+    $points = get_term_meta($term_id, 'szcs_product_cat_points_field-v-' . $vendor, true);
+
+    if (!is_numeric($points)) {
+      $points = get_term_meta($term_id, 'szcs_cat_points_field', true);
+    }
+
+    return $points ?? 0;
+  }
+
+  public function wc_product_cat_set_vendor_points_percent($term_id, $vendor, $points)
+  {
+    if (!is_numeric($vendor)) {
+      return false;
+    }
+
+    if (empty($points)) {
+      return delete_term_meta($term_id, 'szcs_product_cat_points_field-v-' . $vendor);
+    }
+
+    if (!is_numeric($points) || $points < 0 || $points > 100) {
+      return false;
+    }
+
+    return update_term_meta($term_id, 'szcs_product_cat_points_field-v-' . $vendor, $points);
+  }
+
+  public function wc_product_brand_get_vendor_points_percent($term_id, $vendor)
+  {
+    $points = get_term_meta($term_id, 'szcs_product_brand_points_field-v-' . $vendor, true);
+
+    if (!is_numeric($points)) {
+      $points = get_term_meta($term_id, 'szcs_brand_points_field', true);
+    }
+
+    return $points ?? 0;
+  }
+
+  public function wc_product_brand_set_vendor_points_percent($term_id, $vendor, $points)
+  {
+    if (!is_numeric($vendor)) {
+      return false;
+    }
+
+    if (empty($points)) {
+      return delete_term_meta($term_id, 'szcs_product_brand_points_field-v-' . $vendor);
+    }
+
+    if (!is_numeric($points) || $points < 0 || $points > 100) {
+      return false;
+    }
+
+    return update_term_meta($term_id, 'szcs_product_brand_points_field-v-' . $vendor, $points);
   }
 
   public function wc_product_get_points_amount($the_product = false, $type = '')

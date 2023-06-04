@@ -63,8 +63,8 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
       array(
         // 'cb'       => __('cb', 'szcs-coupon'),
         'ID'       => __('ID', 'szcs-coupon'),
-        'username' => __('Username', 'szcs-coupon'),
         'display_name' => __('Name', 'szcs-coupon'),
+        'username' => __('Username', 'szcs-coupon'),
         'user_email' => __('Email', 'szcs-coupon'),
         'wallet_points' => __('Remaining balance', 'szcs-coupon'),
         'actions'  => __('Actions', 'szcs-coupon'),
@@ -93,7 +93,7 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
     $hidden = $this->get_hidden_columns();
     $sortable = $this->get_sortable_columns();
 
-    $this->_column_headers = array($columns, $hidden, $sortable);
+    $this->_column_headers = array($columns, $hidden, $sortable, 'display_name');
 
     $data = $this->get_data();
     $total_items = count($data);
@@ -272,8 +272,8 @@ class SzCs_Coupon_Balance_Details extends WP_List_Table
             'user_id' => $item['ID'],
           ),
           admin_url('user-edit.php')
-        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px"></a> 
-        <a class="button dashicons dashicons-visibility"  style="width: 35px; display: none;" href="' . add_query_arg(
+        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px; display: flex;align-items: center;justify-content: center;"></a> 
+        <a class="button dashicons dashicons-visibility"  style="width: 35px;align-items: center;justify-content: center; display: none;" href="' . add_query_arg(
           array(
             'page'    => 'szcs-coupon-transactions',
             'user_id' => $item['ID'],

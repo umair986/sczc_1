@@ -89,8 +89,8 @@ class SzCs_Coupon_Client_User_Balance_Details extends WP_List_Table
       array(
         // 'cb'       => __('cb', 'szcs-coupon'),
         'ID'       => __('ID', 'szcs-coupon'),
-        'username' => __('Username', 'szcs-coupon'),
         'display_name' => __('Name', 'szcs-coupon'),
+        'username' => __('Username', 'szcs-coupon'),
         'user_email' => __('Email', 'szcs-coupon'),
         'wallet_points' => __('Remaining balance', 'szcs-coupon'),
         'actions'  => __('Actions', 'szcs-coupon'),
@@ -119,7 +119,7 @@ class SzCs_Coupon_Client_User_Balance_Details extends WP_List_Table
     $hidden = $this->get_hidden_columns();
     $sortable = $this->get_sortable_columns();
 
-    $this->_column_headers = array($columns, $hidden, $sortable);
+    $this->_column_headers = array($columns, $hidden, $sortable, 'display_name');
 
     $data = $this->get_data();
     $total_items = count($data);
@@ -246,8 +246,8 @@ class SzCs_Coupon_Client_User_Balance_Details extends WP_List_Table
   public function get_sortable_columns()
   {
     $sortable_columns = array(
-      'username' => array('user_login', false),
       'display_name' => array('display_name', false),
+      'username' => array('user_login', false),
       'user_email' => array('user_email', false),
       'wallet_points' => array('wallet_points', false),
     );
@@ -279,7 +279,7 @@ class SzCs_Coupon_Client_User_Balance_Details extends WP_List_Table
             'user_id' => $item['ID'],
           ),
           admin_url('user-edit.php')
-        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px"></a> <a class="button dashicons dashicons-visibility"  style="display: none; width: 35px" href="' . add_query_arg(
+        ) . '" class="button dashicons dashicons-admin-generic"  style="width: 35px; display: flex;align-items: center;justify-content: center;"></a> <a class="button dashicons dashicons-visibility"  style="display: none; width: 35px" href="' . add_query_arg(
           array(
             'page'    => 'szcs-coupon-transactions',
             'user_id' => $item['ID'],

@@ -99,7 +99,7 @@ class SzCsCouponAdmin
     wp_register_style('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/css/admin/szcs-coupon.css', array(), SZCS_COUPON_PLUGIN_VERSION, 'all');
     wp_register_script('szcs_coupons_admin', plugin_dir_url(SZCS_COUPON_PLUGIN_FILE) . 'assets/js/admin/szcs-coupon.js', array('jquery'), SZCS_COUPON_PLUGIN_VERSION, false);
     wp_localize_script('szcs_coupons_admin', 'SZCS_VARS', $customVar);
-    if (in_array($screen_id, array('szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator', 'edit-product_cat', 'edit-product_brand', 'product', 'coupons_page_szcs-coupon-export', 'toplevel_page_szcs-coupon-export', 'edit-product', 'user-edit'), true)) {
+    if (in_array($screen_id, array('coupons_page_szcs-coupon-client', 'szcs_coupons_code', 'edit-szcs_coupons_code', 'coupons_page_szcs-coupon-generator', 'edit-product_cat', 'edit-product_brand', 'product', 'coupons_page_szcs-coupon-export', 'toplevel_page_szcs-coupon-export', 'edit-product', 'user-edit'), true)) {
       wp_enqueue_script('szcs_coupons_admin');
       wp_enqueue_style('szcs_coupons_admin');
     }

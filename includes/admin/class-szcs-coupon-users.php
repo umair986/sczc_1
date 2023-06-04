@@ -77,6 +77,7 @@ class SzCsCouponUsers
   public function page_html()
   {
 ?>
+
     <div class="wrap">
       <h1 class="wp-heading-inline"><?php echo esc_html(get_admin_page_title()); ?></h1>
       <form id="coupon-users" method="get" action="">
@@ -87,9 +88,9 @@ class SzCsCouponUsers
         <?php endif; ?>
 
         <?php $this->balance_details_table->search_box(__('Search', 'szcs-coupon'), 'search_id'); ?>
+        <?php $this->balance_details_table->views(); ?>
+        <?php $this->balance_details_table->display(); ?>
       </form>
-      <?php $this->balance_details_table->views(); ?>
-      <?php $this->balance_details_table->display(); ?>
     </div>
 <?php
   }
