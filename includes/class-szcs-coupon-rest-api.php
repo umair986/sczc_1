@@ -517,9 +517,9 @@ class SzCsCouponRestApi
 
     global $szcs_coupon_wc, $szcs_coupon_wallet;
 
-    $product_points = $szcs_coupon_wc->wc_product_get_points_amount($product);
+    $product_points = $szcs_coupon_wc->wc_product_get_vendor_points_amount($product, $vendor_id);
 
-    $points = isset($params['coins']) && $params['coins'] <= $product_points ? $params['coins'] : $product_points;
+    $points = $product_points;
 
     $points_balance = (int) $szcs_coupon_wallet->get_balance($user_id);
 
@@ -787,6 +787,18 @@ class SzCsCouponRestApi
   public function api_get_product_by_id($request)
   {
     $id = $request['id'];
+    $client_id = $request->get_header('client-id');
+
+    $filtered_ids = $this->get_filtered_ids($client_id);
+
+    if (!in_array($id, $filtered_ids['include']) && !empty($filtered_ids['include'])) {
+      $response = array(
+        'status_code' => 403,
+        'status' => 'error',
+        'message' => __('You are not allowed to access this product', 'szcs-coupon')
+      );
+      return new WP_REST_Response($response, 403);
+    }
 
     $args = array(
       'post_type' => 'product',
@@ -801,7 +813,7 @@ class SzCsCouponRestApi
     $response = array(
       'status_code' => 200,
       'status' => 'success',
-      'product' => empty($product) ? [] : $this->format_product($product[0]),
+      'product' => empty($product) ? [] : $this->format_product($product[0], $client_id),
     );
 
     if (!$product) {
@@ -814,8 +826,13 @@ class SzCsCouponRestApi
   }
 
 
-  public function api_get_products($request)
+  public function api_get_products(WP_REST_Request $request)
   {
+
+    $vendor_id = $request->get_header('client_id');
+
+    $filtered_ids = $this->get_filtered_ids($vendor_id);
+
     $args = array(
       'post_type' => 'product',
       'post_status' => 'publish',
@@ -823,7 +840,11 @@ class SzCsCouponRestApi
       'orderby' => 'title',
       'order' => 'ASC',
       'paged' => 1,
+      'type' => array('simple', 'variable'),
+      'include' => $filtered_ids['include'],
+      'exclude' => $filtered_ids['exclude'],
     );
+
 
     if (isset($request['category'])) {
       $args['category'] = $request['category'];
@@ -847,15 +868,15 @@ class SzCsCouponRestApi
 
     $products = wc_get_products($args);
 
-
-
     $response = array(
       'status_code' => 200,
       'status' => 'success',
       'page' => $args['paged'],
       'product_count' => count($products),
       'total_products' => wp_count_posts('product')->publish,
-      'products' => array_map(array($this, 'format_product'), $products),
+      'products' => array_map(function ($product) use ($vendor_id) {
+        return $this->format_product($product, $vendor_id);
+      }, $products),
     );
 
     // check if product exists
@@ -869,7 +890,7 @@ class SzCsCouponRestApi
     return new WP_REST_Response($response, $response['status_code']);
   }
 
-  public function format_product($product)
+  public function format_product($product, $vendor_id)
   {
 
 
@@ -903,9 +924,10 @@ class SzCsCouponRestApi
             'image' => array(
               'src' => wp_get_attachment_image_src($variation['image_id'], 'full')[0],
             ),
-            'coins' => $szcs_coupon_wc->wc_product_get_points_amount($variation['variation_id'], 'product'),
-            'category_coins' => $szcs_coupon_wc->wc_product_get_points_amount($variation['variation_id'], 'category'),
-            'brand_coins' => $szcs_coupon_wc->wc_product_get_points_amount($variation['variation_id'], 'brand'),
+            'coins_required' => $szcs_coupon_wc->wc_product_get_vendor_points_amount($variation['variation_id'], $vendor_id),
+            // 'coins' => $szcs_coupon_wc->wc_product_get_points_amount($variation['variation_id'], 'product'),
+            // 'category_coins' => $szcs_coupon_wc->wc_product_get_points_amount($variation['variation_id'], 'category'),
+            // 'brand_coins' => $szcs_coupon_wc->wc_product_get_points_amount($variation['variation_id'], 'brand'),
           );
 
           foreach ($variation['attributes'] as $attribute => $value) {
@@ -1050,6 +1072,153 @@ class SzCsCouponRestApi
 
 
     return $order_data;
+  }
+
+  protected function get_filtered_ids($vendor_id)
+  {
+
+    // get products brands by term meta
+    $brands_exclude = get_terms(array(
+      'taxonomy' => 'product_brand',
+      'hide_empty' => false,
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_product_brand_query_field-v-' . $vendor_id,
+          'value' => 'exclude',
+          'compare' => '='
+        ),
+      ),
+      'fields' => 'ids',
+    ));
+
+    $cat_include = get_terms(array(
+      'taxonomy' => 'product_cat',
+      'hide_empty' => true,
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_product_cat_query_field-v-' . $vendor_id,
+          'value' => 'include',
+          'compare' => '='
+        ),
+      ),
+      'fields' => 'ids',
+    ));
+
+    $cat_exclude = get_terms(array(
+      'taxonomy' => 'product_cat',
+      'hide_empty' => true,
+      'meta_query' => array(
+        array(
+          'key' => 'szcs_product_cat_query_field-v-' . $vendor_id,
+          'value' => 'exclude',
+          'compare' => '='
+        ),
+      ),
+      'fields' => 'ids',
+    ));
+
+    $product_include1A = get_posts(
+      array(
+        'post_status' => 'publish',
+        'post_type' => array('product', 'product_variation'),
+        'fields' => 'id=>parent',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+          array(
+            'key' => 'szcs_product_query_field-v-' . $vendor_id,
+            'value' => 'include',
+            'compare' => '='
+          ),
+        )
+      )
+    );
+
+    $product_include1 = [];
+
+    foreach ($product_include1A as $key => $value) {
+      if ($value == 0) {
+        $product_include1[] = $key;
+      } else {
+        $product_include1[] = $value;
+      }
+    }
+
+    $product_excludeA = get_posts(
+      array(
+        'post_status' => 'publish',
+        'post_type' => array('product', 'product_variation'),
+        'fields' => 'id=>parent',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+          array(
+            'key' => 'szcs_product_query_field-v-' . $vendor_id,
+            'value' => 'exclude',
+            'compare' => '='
+          ),
+        )
+      )
+    );
+
+    $product_exclude = [];
+
+    foreach ($product_excludeA as $key => $value) {
+      if ($value == 0) {
+        $product_exclude[] = $key;
+      } else {
+        $product_exclude[] = $value;
+      }
+    }
+
+    $product_include2 = get_posts(
+      array(
+        'post_status' => 'publish',
+        'post_type' => 'product',
+        'fields' => 'ids',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+          array(
+            'taxonomy' => 'product_cat',
+            'field' => 'term_id',
+            'terms' => $cat_include,
+            'operator' => 'IN'
+          )
+        ),
+      )
+    );
+
+    $product_include3 = get_posts(
+      array(
+        'post_status' => 'publish',
+        'post_type' => array('product'),
+        'fields' => 'ids',
+        'posts_per_page' => -1,
+        'tax_query' => array(
+          array(
+            'taxonomy' => 'product_cat',
+            'field' => 'term_id',
+            'terms' => $cat_exclude,
+            'operator' => 'NOT IN'
+          ),
+          [
+            'taxonomy' => 'product_brand',
+            'field' => 'term_id',
+            'terms' => $brands_exclude,
+            'operator' => 'NOT IN'
+          ]
+        ),
+      )
+    );
+
+
+    $product_include = array_unique(array_merge($product_include1, $product_include2, $product_include3));
+
+    // remove excluded products from include
+    $product_include = array_values(array_diff($product_include, $product_exclude));
+
+    return [
+      'include' => $product_include,
+      'exclude' => $product_exclude,
+    ];
   }
 }
 

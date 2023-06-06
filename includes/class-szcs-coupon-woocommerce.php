@@ -612,6 +612,22 @@ class SzCsCouponWC
     return update_term_meta($term_id, 'szcs_product_brand_points_field-v-' . $vendor, $points);
   }
 
+  public function wc_product_get_vendor_points_amount($the_product, $vendor_id, $type = "")
+  {
+    $product = $this->get_product($the_product);
+    if (!empty($product)) {
+
+      $point_percent = $this->wc_product_get_vendor_points_percent($the_product, $vendor_id, $type);
+
+      if ($point_percent) {
+
+        // calculate amount of the price and return
+        return (int) (($point_percent / 100) * $product->get_price());
+      }
+    }
+    return 0;
+  }
+
   public function wc_product_get_points_amount($the_product = false, $type = '')
   {
     $product = $this->get_product($the_product);
