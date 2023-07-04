@@ -32,8 +32,6 @@ The customer object will have the following properties:
 - `username`: a string representing the username of the customer.
 - `email`: a string representing the email address of the customer.
 - `display_name`: a string representing the display name of the customer.
-- `avatar`: a string representing the URL of the customer's avatar.
-- `points`: a string representing the number of points the customer has.
 - `total_orders`: an integer representing the total number of orders placed by the customer.
 
 ## Status Codes
@@ -66,8 +64,6 @@ client-id: {client_id}
             "username": "johndoe",
             "email": "johndoe@example.com",
             "display_name": "John Doe",
-            "avatar": "avatar_url",
-            "points": "100",
             "total_orders": 1
         }
     ]
